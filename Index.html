@@ -1,0 +1,3704 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Taller CWP - Quiebre a Nivel de Paquete | FEL3</title>
+<!-- Flatpickr Date Picker -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<style>
+:root {
+  --primary:#3a3a3a; --primary-l:#555555; --accent:#e87c1e; --accent-l:#f5993d;
+  --success:#5a9a68; --danger:#c0392b; --warn:#e87c1e;
+  --bg:#f4f4f2; --card:#ffffff; --text:#2b2b2b; --muted:#7a7a7a; --border:#d4d4d4;
+  --shadow:0 2px 8px rgba(0,0,0,0.06), 0 4px 14px rgba(0,0,0,0.03);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;}
+
+.header{background:linear-gradient(135deg,#2b2b2b 0%,#3a3a3a 40%,#4a4a4a 100%);color:white;padding:1.5rem 2rem;text-align:center;position:relative;}
+.header h1{font-size:1.6rem;font-weight:800;}
+.header .sub{color:#f5993d;font-size:0.9rem;margin-top:0.25rem;}
+.header .badge{display:inline-block;background:var(--accent);padding:0.2rem 0.7rem;border-radius:15px;font-size:0.7rem;font-weight:700;margin-top:0.4rem;}
+
+.nav{background:white;border-bottom:2px solid var(--border);position:sticky;top:0;z-index:100;display:flex;overflow-x:auto;box-shadow:var(--shadow);}
+.nav-btn{flex:1;min-width:110px;padding:0.8rem 0.5rem;border:none;background:transparent;cursor:pointer;font-size:0.78rem;font-weight:600;color:var(--muted);border-bottom:3px solid transparent;transition:all 0.3s;display:flex;flex-direction:column;align-items:center;gap:0.2rem;}
+.nav-btn:hover{color:var(--primary);background:#f7fafc;}
+.nav-btn.active{color:var(--primary);border-bottom-color:var(--accent);background:#fef3e8;}
+
+.container{max-width:1100px;margin:0 auto;padding:1.5rem;}
+.section{display:none;animation:fadeIn 0.4s ease;}
+.section.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+.card{background:var(--card);border-radius:12px;padding:1.5rem;margin-bottom:1.25rem;box-shadow:var(--shadow);border:1px solid var(--border);}
+.card h2{font-size:1.2rem;color:var(--primary);margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;}
+.card h3{font-size:1rem;color:var(--primary-l);margin-bottom:0.5rem;}
+
+.hint{background:#fef3e8;border:1px solid #f5d5b0;border-left:4px solid var(--accent);border-radius:0 8px 8px 0;padding:0.75rem 1rem;margin:0.75rem 0;font-size:0.9rem;color:#6b4a1f;}
+.info-box{background:#f0f0ee;border-left:4px solid var(--primary-l);border-radius:0 8px 8px 0;padding:0.75rem 1rem;margin:0.75rem 0;font-size:0.9rem;color:var(--primary);}
+
+.btn{padding:0.6rem 1.2rem;border:none;border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.2s;font-size:0.85rem;display:inline-flex;align-items:center;gap:0.4rem;}
+.btn:hover{transform:translateY(-1px);}
+.btn-accent{background:var(--accent);color:white;}
+.btn-accent:hover{background:var(--accent-l);}
+.btn-primary{background:var(--primary);color:white;}
+.btn-success{background:var(--success);color:white;}
+.btn-outline{background:transparent;color:var(--primary);border:2px solid var(--primary);}
+.btn-outline:hover{background:var(--primary);color:white;}
+.btn-sm{padding:0.4rem 0.8rem;font-size:0.75rem;}
+.btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
+.btn-group{display:flex;gap:0.6rem;margin-top:1.25rem;flex-wrap:wrap;}
+
+.discipline-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:0.5rem;margin:0.75rem 0;}
+.discipline-chip{padding:0.6rem;border:2px solid var(--border);border-radius:8px;cursor:pointer;transition:all 0.2s;text-align:center;font-size:0.85rem;background:white;}
+.discipline-chip:hover{border-color:var(--primary-l);background:#f7fafc;}
+.discipline-chip.selected{border-color:var(--accent);background:#fef3e8;font-weight:700;}
+
+.cwp-manager{background:#f7fafc;border:2px dashed var(--border);border-radius:10px;padding:1rem;margin:0.75rem 0;}
+.cwp-list{display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:0.75rem;}
+.cwp-tag{display:inline-flex;align-items:center;gap:0.3rem;padding:0.3rem 0.7rem;border-radius:20px;font-size:0.8rem;font-weight:700;color:white;transition:all 0.2s;background:var(--accent);}
+.cwp-tag .remove-cwp{cursor:pointer;opacity:0.7;font-size:0.7rem;margin-left:0.2rem;background:rgba(255,255,255,0.3);border-radius:50%;width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;line-height:1;}
+
+.constraint-table{width:100%;border-collapse:collapse;font-size:0.85rem;margin:0.75rem 0;}
+.constraint-table th{background:var(--primary);color:white;padding:0.5rem;text-align:left;font-size:0.75rem;}
+.constraint-table td{padding:0.5rem;border-bottom:1px solid var(--border);}
+.constraint-table tr:hover{background:#f7fafc;}
+
+.print-btn{display:block;margin:30px auto;padding:14px 40px;font-size:14pt;background:#3a3a3a;color:white;border:none;border-radius:8px;cursor:pointer;}
+.print-btn:hover{background:#555555;}
+
+@media print{
+  .no-print{display:none!important;}
+  body{background:white;color:#2b2b2b;}
+  .header{background:#2b2b2b;color:white;page-break-after:avoid;}
+  .nav{display:none!important;}
+  .section{display:block!important;page-break-inside:avoid;margin-bottom:2cm;}
+  .card{box-shadow:none;border:1px solid #ddd;page-break-inside:avoid;}
+  table{page-break-inside:avoid;width:100%;}
+  img{max-width:100%;page-break-inside:avoid;}
+  h1,h2,h3{page-break-after:avoid;}
+  .print-btn{display:none!important;}
+  @page{margin:1cm;size:A4;}
+}
+
+input, select, textarea {
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(232,124,30,0.1);
+}
+
+textarea {
+  min-height: 60px;
+  resize: vertical;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+
+table th {
+  background: var(--primary);
+  color: white;
+  padding: 0.75rem;
+  text-align: left;
+  font-size: 0.85rem;
+}
+
+table td {
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+}
+
+table tr:nth-child(even) {
+  background: #f9fafb;
+}
+
+/* Image Modal/Lightbox Styles */
+.image-modal {
+  display: none;
+  position: fixed;
+  z-index: 2000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.8);
+  animation: fadeIn 0.3s ease;
+}
+
+.image-modal.show {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.modal-image {
+  max-width: 100%;
+  max-height: 85vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+}
+
+.modal-close {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  font-size: 2rem;
+  font-weight: bold;
+  color: white;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.modal-close:hover {
+  transform: scale(1.2);
+  color: var(--accent);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+</style>
+</head>
+<body>
+<!-- Input oculto global para cargar archivos -->
+<input type="file" id="cargarProyectoInput" accept=".json" style="display:none;" onchange="cargarProyectoDelArchivo(event)">
+
+<!-- Modal para mostrar/copiar JSON -->
+<div id="jsonModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;padding:20px;box-sizing:border-box;">
+  <div style="background:white;border-radius:8px;max-width:800px;max-height:90vh;margin:auto;padding:20px;overflow:auto;box-shadow:0 10px 40px rgba(0,0,0,0.3);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+      <h2 style="margin:0;color:#2b2b2b;">Datos del Proyecto (JSON)</h2>
+      <button onclick="cerrarJsonModal()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#666;">✕</button>
+    </div>
+
+    <div style="margin-bottom:1rem;padding:10px;background:#f0f4f8;border-radius:6px;border-left:4px solid #3182ce;">
+      <p style="margin:0;font-size:0.9rem;color:#333;"><strong>📋 Instrucciones:</strong> Copia este JSON y guárdalo en un archivo de texto (.txt) o abre en notepad. Para cargar, pega el contenido en el área de carga.</p>
+    </div>
+
+    <textarea id="jsonContent" style="width:100%;height:400px;padding:1rem;border:1px solid #ddd;border-radius:6px;font-family:monospace;font-size:0.85rem;resize:vertical;"></textarea>
+
+    <div style="margin-top:1rem;display:flex;gap:0.75rem;">
+      <button onclick="copiarJSON()" class="btn btn-accent" style="flex:1;">📋 Copiar JSON</button>
+      <button onclick="descargarJSON()" class="btn btn-outline" style="flex:1;border-color:#d69e2e;color:#d69e2e;">⬇️ Descargar</button>
+      <button onclick="cerrarJsonModal()" class="btn btn-outline" style="flex:1;">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para pegar JSON -->
+<div id="pasteJsonModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;padding:20px;box-sizing:border-box;">
+  <div style="background:white;border-radius:8px;max-width:800px;max-height:90vh;margin:auto;padding:20px;overflow:auto;box-shadow:0 10px 40px rgba(0,0,0,0.3);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+      <h2 style="margin:0;color:#2b2b2b;">Cargar Proyecto desde JSON</h2>
+      <button onclick="cerrarPasteModal()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#666;">✕</button>
+    </div>
+
+    <div style="margin-bottom:1rem;padding:10px;background:#f0f4f8;border-radius:6px;border-left:4px solid #38a169;">
+      <p style="margin:0;font-size:0.9rem;color:#333;"><strong>📌 Instrucciones:</strong> Pega aquí el contenido JSON que copiaste anteriormente. Luego haz clic en "Cargar Proyecto".</p>
+    </div>
+
+    <textarea id="pasteJsonContent" style="width:100%;height:400px;padding:1rem;border:1px solid #ddd;border-radius:6px;font-family:monospace;font-size:0.85rem;resize:vertical;placeholder:'Pega el JSON aquí...'"></textarea>
+
+    <div style="margin-top:1rem;display:flex;gap:0.75rem;">
+      <button onclick="cargarDesdeJSON()" class="btn btn-accent" style="flex:1;">✓ Cargar Proyecto</button>
+      <button onclick="cerrarPasteModal()" class="btn btn-outline" style="flex:1;">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="header">
+  <h1>Taller Módulo 3 - Quiebre a Nivel de CWP</h1>
+  <div class="sub">Fase FEL 3 | Ingeniería Básica</div>
+  <div class="badge">PLANTA DE REACTIVOS - CWA-05</div>
+</div>
+
+<div class="nav">
+  <button class="nav-btn active" onclick="showTab('antecedentes')">Antecedentes</button>
+  <button class="nav-btn" onclick="showTab('definir')">Definir CWP</button>
+  <button class="nav-btn" onclick="showTab('criterios')">Criterios</button>
+  <button class="nav-btn" onclick="showTab('restricciones')">Restricciones</button>
+  <button class="nav-btn" onclick="showTab('planificacion')">Planificación</button>
+  <button class="nav-btn" onclick="showTab('ficha')">Ficha CWP</button>
+  <button class="nav-btn" onclick="showTab('resultados')">Resultados</button>
+</div>
+
+<!-- Image Modal -->
+<div id="imageModal" class="image-modal" onclick="closeImageModal(event)">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeImageModal()">×</button>
+    <img id="modalImage" class="modal-image" src="" alt="Expanded image">
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Tab: Antecedentes -->
+  <div id="tab-antecedentes" class="section active">
+    <div class="card">
+      <h2>📋 Antecedentes del Proyecto</h2>
+      <p>Antes de definir los paquetes de construcción (CWP), debes conocer los antecedentes y restricciones del proyecto. Lee la información proporcionada y analiza cómo impacta en la descomposición.</p>
+    </div>
+
+    <div class="card">
+      <h3>Información del Proyecto</h3>
+      <div class="info-box">
+        <strong>Proyecto:</strong> Planta de Servicios Auxiliares - Sistema de Reactivos (CWA-05)<br>
+        <strong>Tipo:</strong> Greenfield minero a 3.000 m.s.n.m.<br>
+        <strong>Fase:</strong> FEL3 - Ingeniería Básica
+      </div>
+
+      <h3 style="margin-top:1.5rem;">Antecedentes:</h3>
+      <ol style="margin-left:1.5rem;margin-bottom:1rem;">
+        <li>Proyecto minero greenfield a 3.000 m.s.n.m.</li>
+        <li>Existen caminos temporales de acceso a las obras</li>
+        <li>Las fundaciones deben considerar excavaciones locales</li>
+        <li>Instalación de luminarias al interior de la planta</li>
+        <li>Utilización de grúas para montaje de equipos y estructuras</li>
+        <li>Estructuras de acero modularizadas por fabricante</li>
+        <li>Montaje de equipos con apoyo técnico de fabricantes</li>
+      </ol>
+
+      <h3>Contexto del Proyecto - Todas las CWA:</h3>
+      <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1rem;"><em>Se completa según información del proyecto</em></p>
+
+      <h3 style="margin-top:1.5rem;">Datos Específicos del CWA-05:</h3>
+      <div class="info-box" style="font-size:0.9rem;">
+        <strong>CWA-05: Planta de Reactivos</strong><br>
+        Horas Hombre Estimadas: <strong>184,050 HH</strong><br>
+        <em>Las fechas de inicio y término se definen en la sección de Planificación del taller</em>
+      </div>
+
+      <h3 style="margin-top:1.5rem;">Visualización del Proyecto:</h3>
+      <div style="background:#f7fafc;border:1px solid var(--border);border-radius:8px;padding:1rem;margin:1rem 0;text-align:center;">
+        <img src="./CWA-05.png" alt="CWA-05 Planta de Reactivos - Vista 3D" style="max-width:100%;height:auto;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+        <p style="font-size:0.9rem;color:var(--muted);margin-top:0.5rem;"><strong>CWA-05: Planta de Reactivos</strong> - Vista isométrica del proyecto</p>
+      </div>
+
+      <h3 style="margin-top:1.5rem;">Disciplinas Disponibles (Códigos Propuestos):</h3>
+      <table>
+        <tr><th>Código</th><th>Disciplina</th></tr>
+        <tr><td><strong>C</strong></td><td>Obras Civiles</td></tr>
+        <tr><td><strong>S</strong></td><td>Civil Estructural</td></tr>
+        <tr><td><strong>A</strong></td><td>Arquitectura</td></tr>
+        <tr><td><strong>M</strong></td><td>Mecánica</td></tr>
+        <tr><td><strong>P</strong></td><td>Cañerías</td></tr>
+        <tr><td><strong>E</strong></td><td>Electricidad</td></tr>
+        <tr><td><strong>I</strong></td><td>Instrumentación</td></tr>
+        <tr><td><strong>H</strong></td><td>HSEC</td></tr>
+        <tr><td><strong>PR</strong></td><td>Procurement</td></tr>
+      </table>
+
+      <h3 style="margin-top:1.5rem;">Actividades Principales:</h3>
+      <table>
+        <tr><th>Descripción</th></tr>
+        <tr><td>Fundaciones de hormigón</td></tr>
+        <tr><td>Estructuras de acero</td></tr>
+        <tr><td>Equipos mecánicos</td></tr>
+        <tr><td>Equipos eléctricos</td></tr>
+        <tr><td>Equipos instrumentación</td></tr>
+        <tr><td>Escalerillas eléctricas</td></tr>
+        <tr><td>Cañerías</td></tr>
+        <tr><td>Recubrimiento edificio estructural</td></tr>
+        <tr><td>Paraderos camiones</td></tr>
+        <tr><td>Cercos</td></tr>
+      </table>
+    </div>
+
+    <div class="btn-group" style="justify-content:center;margin-top:2rem;">
+      <button class="btn btn-accent" onclick="showTab('definir')">Siguiente: Definir CWP ➔</button>
+    </div>
+  </div>
+
+  <!-- Tab: Definir CWP -->
+  <div id="tab-definir" class="section">
+    <div class="card">
+      <h2>🏗️ Definición de Paquetes de Construcción (CWP)</h2>
+      <p>Define los paquetes de construcción (CWP) del CWA-05 seleccionando disciplinas y distribuyendo horas hombre. Cada disciplina seleccionada se convertirá en un CWP con código automático.</p>
+    </div>
+
+    <div class="card">
+      <h3>Instrucciones Generales</h3>
+      <div class="info-box">
+        <strong>Objetivo:</strong> Para el CWA-05 (Planta de Reactivos), debes:<br><br>
+        1. <strong>Seleccionar disciplinas:</strong> Desde el listado disponible, elige cuáles forman parte de este área de construcción.<br><br>
+        2. <strong>Estimar horas hombre:</strong> Del informe de fase anterior se estiman 184,050 HH totales para CWA-05. Distribuye esta cantidad entre las disciplinas seleccionadas según importancia relativa de cada una.<br><br>
+        3. <strong>Codificar CWP:</strong> Cada paquete debe tener un código único siguiendo la estructura estándar. Tú debes definir los códigos de cada paquete.<br><br>
+        4. <strong>Completar fichas:</strong> Cada CWP generado debe incluir: nombre de disciplina, código, CWA asociada (CWA-05), descripción detallada de alcances, HH estimadas, fecha de inicio y fecha de término.
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Estructura de Codificación de CWP</h3>
+      <p style="font-size:0.9rem;color:var(--muted);margin-bottom:1rem;">Los paquetes de construcción deben codificarse siguiendo una estructura estándar. Analiza la siguiente tabla y crea los códigos para tus CWP:</p>
+
+      <table style="margin-bottom:1rem;">
+        <tr style="background:#e87c1e;color:white;font-weight:bold;">
+          <td colspan="11" style="text-align:center;padding:0.75rem;">Construction Work Package (CWP) - Estructura de Codificación</td>
+        </tr>
+        <tr style="background:#f5993d;color:white;">
+          <td style="text-align:center;"><strong>Nivel AWP</strong></td>
+          <td style="text-align:center;"></td>
+          <td style="text-align:center;"></td>
+          <td style="text-align:center;"></td>
+          <td style="text-align:center;"><strong>Nº CWA</strong></td>
+          <td style="text-align:center;"></td>
+          <td style="text-align:center;"></td>
+          <td style="text-align:center;"><strong>Disciplina</strong></td>
+          <td style="text-align:center;"></td>
+          <td style="text-align:center;"><strong>Nº Correlativo</strong></td>
+          <td style="text-align:center;"></td>
+        </tr>
+        <tr>
+          <td style="text-align:center;font-weight:bold;">C</td>
+          <td style="text-align:center;">W</td>
+          <td style="text-align:center;">P</td>
+          <td style="text-align:center;">-</td>
+          <td style="text-align:center;">0</td>
+          <td style="text-align:center;">5</td>
+          <td style="text-align:center;">-</td>
+          <td style="text-align:center;">C</td>
+          <td style="text-align:center;">-</td>
+          <td style="text-align:center;">0</td>
+          <td style="text-align:center;">1</td>
+        </tr>
+        <tr style="background:#f9fafb;">
+          <td style="text-align:center;font-size:0.8rem;color:var(--muted);">Pos 1</td>
+          <td style="text-align:center;font-size:0.8rem;color:var(--muted);">Pos 2</td>
+          <td style="text-align:center;font-size:0.8rem;color:var(--muted);">Pos 3</td>
+          <td style="text-align:center;font-size:0.8rem;color:var(--muted);">Pos 4</td>
+          <td style="text-align:center;font-size:0.8rem;color:var(--muted);">Pos 5</td>
+          <td style="text-align:center;font-size:0.8rem;color:var(--muted);">Pos 6</td>
+          <td style="text-align:center;font-size:0.8rem;color:var(--muted);">Pos 7</td>
+          <td style="text-align:center;font-size:0.8rem;color:var(--muted);">Pos 8</td>
+          <td style="text-align:center;font-size:0.8rem;color:var(--muted);">Pos 9</td>
+          <td style="text-align:center;font-size:0.8rem;color:var(--muted);">Pos 10</td>
+          <td style="text-align:center;font-size:0.8rem;color:var(--muted);">Pos 11</td>
+        </tr>
+      </table>
+
+      <div class="hint">
+        <strong>Cómo codificar:</strong><br>
+        • <strong>Pos 1-3:</strong> CWP (nivel de paquete)<br>
+        • <strong>Pos 4:</strong> Separador (-)<br>
+        • <strong>Pos 5-6:</strong> Número del CWA (05 para CWA-05)<br>
+        • <strong>Pos 7:</strong> Separador (-)<br>
+        • <strong>Pos 8:</strong> Código de Disciplina Propuesto (C, S, A, M, P, E, I, H, PR, o el que propongas)<br>
+        • <strong>Pos 9:</strong> Separador (-)<br>
+        • <strong>Pos 10-11:</strong> Número correlativo (01, 02, 03, etc.)<br><br>
+        <strong>Ejemplo para CWA-05:</strong> CWP-05-C-01 (CWP del CWA-05, disciplina Civil, paquete 01)
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Paso 1: Selecciona Disciplinas para CWA-05</h3>
+      <div class="hint">Marca las disciplinas que aplican al proyecto de Planta de Reactivos. Considera todas las especialidades que se requieren para construir esta planta. Cada disciplina seleccionada se convertirá automáticamente en un CWP. Si falta una disciplina, puedes agregarla manualmente.</div>
+
+      <div class="discipline-grid" id="discipline-grid"></div>
+
+      <h4 style="margin-top:1.5rem;">Agregar Disciplina Personalizada:</h4>
+      <div style="display:flex;gap:0.5rem;margin-bottom:1rem;">
+        <input type="text" id="nuevaDisciplinaInput" placeholder="Ej: Seguridad, Logística, etc." style="flex:1;padding:0.5rem;border:1px solid var(--border);border-radius:6px;">
+        <button class="btn btn-outline btn-sm" onclick="agregarDisciplinaPersonalizada()">+ Agregar</button>
+      </div>
+      <div id="disciplinas-personalizadas"></div>
+
+      <h3 style="margin-top:1.5rem;">Paso 2: CWP Definidos Automáticamente</h3>
+      <p style="font-size:0.9rem;color:var(--muted);margin-bottom:0.75rem;">Los siguientes CWP se han generado automáticamente basados en las disciplinas seleccionadas. Cada uno tendrá su código, descripción y ficha asociada.</p>
+      <div class="cwp-manager">
+        <h4 style="margin-bottom:0.5rem;">Paquetes Generados:</h4>
+        <div class="cwp-list" id="cwp-list"></div>
+        <p id="cwp-total" style="font-size:0.85rem;color:var(--muted);margin-top:0.5rem;"></p>
+      </div>
+
+      <h3 style="margin-top:2rem;">Paso 3: Codificación Manual de CWP</h3>
+      <p style="font-size:0.9rem;color:var(--muted);margin-bottom:1rem;">Define manualmente cada CWP por disciplina. Puedes crear más de un CWP por especialidad según sea necesario. Usa la estructura de codificación como referencia.</p>
+
+      <div id="codificacion-cwp-container"></div>
+
+      <div class="hint" style="margin-top:1rem;">
+        <strong>Próximo paso:</strong> Dirígete a la sección <strong>Ficha CWP</strong> para completar los detalles específicos de cada paquete (descripción de alcances, fechas, criterios de quiebre).
+      </div>
+    </div>
+
+    <div class="btn-group" style="justify-content:center;margin-top:1.5rem;gap:0.75rem;flex-wrap:wrap;">
+      <button class="btn btn-outline" onclick="abrirModalExportar()" style="background:#f0f4f8;border-color:#3182ce;color:#3182ce;">⬇️ Descargar</button>
+      <button class="btn btn-outline" id="cargarProyectoBtnDefinir" style="background:#f0f4f8;border-color:#38a169;color:#38a169;">⬆️ Cargar</button>
+    </div>
+
+    <div class="btn-group" style="justify-content:center;margin-top:1rem;">
+      <button class="btn btn-primary" onclick="showTab('antecedentes')">❮ Anterior</button>
+      <button class="btn btn-accent" onclick="showTab('criterios')">Siguiente: Criterios ➔</button>
+    </div>
+  </div>
+
+  <!-- Tab: Criterios -->
+  <div id="tab-criterios" class="section">
+    <div class="card">
+      <h2>✓ Criterios de Quiebre del CWP</h2>
+      <p>Define los criterios de quiebre para cada CWP generado, más una observación general.</p>
+    </div>
+
+    <div class="card">
+      <h3>Criterios de Quiebre por CWP</h3>
+      <div class="hint">Describe para cada CWP por qué se definió de esa manera. Explica qué factores consideraste (disciplina, secuencia constructiva, acceso, logística, modularización, riesgo, recursos, etc.)</div>
+
+      <table class="constraint-table">
+        <thead>
+          <tr style="background:var(--primary);color:white;">
+            <th style="width:20%;">CWP</th>
+            <th style="width:80%;">Criterio de Quiebre</th>
+          </tr>
+        </thead>
+        <tbody id="criterios-table">
+          <tr>
+            <td colspan="2" style="text-align:center;color:var(--muted);padding:2rem;">Genera CWP en el Paso 4 para ver la tabla</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="btn-group" style="justify-content:center;margin-top:1.5rem;gap:0.75rem;flex-wrap:wrap;">
+      <button class="btn btn-outline" onclick="abrirModalExportar()" style="background:#f0f4f8;border-color:#3182ce;color:#3182ce;">⬇️ Descargar</button>
+      <button class="btn btn-outline" id="cargarProyectoBtnCriterios" style="background:#f0f4f8;border-color:#38a169;color:#38a169;">⬆️ Cargar</button>
+    </div>
+
+    <div class="btn-group" style="justify-content:center;margin-top:1rem;">
+      <button class="btn btn-primary" onclick="showTab('definir')">❮ Anterior</button>
+      <button class="btn btn-accent" onclick="showTab('restricciones')">Siguiente: Restricciones ➔</button>
+    </div>
+  </div>
+
+  <!-- Tab: Restricciones -->
+  <div id="tab-restricciones" class="section">
+    <div class="card">
+      <h2>⚠️ Restricciones Tempranas (FEL3)</h2>
+      <p>Identifica las restricciones a la construcción de cada CWP, más una observación general de restricciones del CWA-05.</p>
+    </div>
+
+    <div class="card">
+      <h3>Restricciones por CWP</h3>
+      <div class="hint">Describe las restricciones específicas para cada CWP (acceso, logística, permisos, disponibilidad de recursos, lead times, etc.)</div>
+
+      <table class="constraint-table">
+        <thead>
+          <tr style="background:var(--primary);color:white;">
+            <th style="width:15%;">CWP / #</th>
+            <th style="width:55%;">Restricción</th>
+            <th style="width:30%;">Responsable</th>
+          </tr>
+        </thead>
+        <tbody id="restricciones-table">
+          <tr>
+            <td colspan="3" style="text-align:center;color:var(--muted);padding:2rem;">Genera CWP en el Paso 4 para ver la tabla</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="btn-group" style="justify-content:center;margin-top:1.5rem;gap:0.75rem;flex-wrap:wrap;">
+      <button class="btn btn-outline" onclick="abrirModalExportar()" style="background:#f0f4f8;border-color:#3182ce;color:#3182ce;">⬇️ Descargar</button>
+      <button class="btn btn-outline" id="cargarProyectoBtnRestricciones" style="background:#f0f4f8;border-color:#38a169;color:#38a169;">⬆️ Cargar</button>
+    </div>
+
+    <div class="btn-group" style="justify-content:center;margin-top:1rem;">
+      <button class="btn btn-primary" onclick="showTab('criterios')">❮ Anterior</button>
+      <button class="btn btn-accent" onclick="showTab('planificacion')">Siguiente: Planificación ➔</button>
+    </div>
+  </div>
+
+  <!-- Tab: Planificación -->
+  <div id="tab-planificacion" class="section">
+    <div class="card">
+      <h2>📅 Planificación de CWP</h2>
+      <p>Complete la estimación de fechas de inicio y término para cada CWP. Considere la secuencia constructiva y dependencias.</p>
+    </div>
+
+    <div class="card">
+      <h3>Programación de CWP</h3>
+      <p style="font-size:0.9rem;color:var(--muted);margin-bottom:1rem;">Ingrese las fechas de inicio y término para cada CWP definido.</p>
+      <div id="planificacion-table"></div>
+
+      <h3 style="margin-top:2rem;">Diagrama Gantt (Referencial)</h3>
+      <div id="gantt-container" style="background:#f7fafc;border:1px solid var(--border);border-radius:8px;padding:1rem;margin-top:1rem;min-height:200px;font-size:0.85rem;">
+        <p style="color:var(--muted);text-align:center;">El diagrama se actualizará con las fechas ingresadas</p>
+      </div>
+    </div>
+
+    <div class="btn-group" style="justify-content:center;margin-top:1.5rem;gap:0.75rem;flex-wrap:wrap;">
+      <button class="btn btn-outline" onclick="abrirModalExportar()" style="background:#f0f4f8;border-color:#3182ce;color:#3182ce;">⬇️ Descargar</button>
+      <button class="btn btn-outline" id="cargarProyectoBtnPlanificacion" style="background:#f0f4f8;border-color:#38a169;color:#38a169;">⬆️ Cargar</button>
+    </div>
+
+    <div class="btn-group" style="justify-content:center;margin-top:1rem;">
+      <button class="btn btn-primary" onclick="showTab('restricciones')">❮ Anterior</button>
+      <button class="btn btn-accent" onclick="showTab('ficha')">Siguiente: Ficha CWP ➔</button>
+    </div>
+  </div>
+
+  <!-- Tab: Ficha CWP -->
+  <div id="tab-ficha" class="section">
+    <div class="card">
+      <h2>📄 Ficha de CWP</h2>
+      <p>Escoge uno de los CWP definidos y completa su ficha con toda la información requerida.</p>
+    </div>
+
+    <div class="card">
+      <h3>Selecciona CWP</h3>
+      <select id="cwp-selector" onchange="cargarFicha()" style="width:100%;margin-bottom:1rem;">
+        <option value="">-- Selecciona un CWP --</option>
+      </select>
+
+      <h3>Código</h3>
+      <input type="text" id="ficha-codigo" placeholder="CWP-XXX" style="width:100%;margin-bottom:1rem;">
+
+      <h3>Descripción / Alcance</h3>
+      <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.5rem;">Se copia automáticamente de fichas anteriores si existen</p>
+      <textarea id="ficha-desc" placeholder="Describe el alcance de este CWP..." style="background:#f7fafc;"></textarea>
+
+      <h3 style="margin-top:1rem;">Antecedentes Adicionales</h3>
+      <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.5rem;">Información complementaria o notas adicionales sobre este CWP</p>
+      <textarea id="ficha-antecedentes" placeholder="Antecedentes adicionales, observaciones especiales, referencias, etc..."></textarea>
+
+      <h3 style="margin-top:1.5rem;">🖼️ Visualización del CWP (Opcional)</h3>
+      <p style="font-size:0.9rem;color:var(--muted);margin-bottom:0.75rem;">Selecciona una imagen que represente este CWP. Si no encuentras una imagen adecuada, puedes dejar sin selección.</p>
+      <div id="image-gallery" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:0.75rem;margin-bottom:1rem;"></div>
+      <div id="selected-image-preview" style="margin:1rem 0;text-align:center;">
+        <img id="ficha-selected-image" src="" style="max-width:100%;max-height:300px;border-radius:8px;display:none;box-shadow:var(--shadow);border:2px solid var(--accent);">
+        <p id="no-image-text" style="color:var(--muted);font-size:0.9rem;">Sin imagen seleccionada</p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem;">
+        <div>
+          <h3>Fecha Inicio</h3>
+          <input type="text" id="ficha-inicio" placeholder="DD/MM/YYYY" maxlength="10" style="text-align:center;" onchange="calcularDuracion()">
+        </div>
+        <div>
+          <h3>Fecha Término</h3>
+          <input type="text" id="ficha-termino" placeholder="DD/MM/YYYY" maxlength="10" style="text-align:center;" onchange="calcularDuracion()">
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem;">
+        <div>
+          <h3>Horas Hombre</h3>
+          <input type="number" id="ficha-hh" placeholder="HH" style="width:100%;">
+        </div>
+        <div>
+          <h3>Duración (semanas)</h3>
+          <input type="text" id="ficha-duracion" placeholder="Calculado automáticamente" readonly>
+        </div>
+      </div>
+
+      <h3 style="margin-top:1rem;">Criterios de Quiebre (Por qué este CWP?)</h3>
+      <div id="ficha-criterios-container" style="background:#f7fafc;border:1px solid var(--border);border-radius:6px;padding:1rem;min-height:80px;font-size:0.9rem;color:var(--muted);">
+        <p>Se cargará automáticamente desde los criterios registrados...</p>
+      </div>
+
+      <h3 style="margin-top:1rem;">Restricciones Identificadas</h3>
+      <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.75rem;">Indica el estado de cada restricción: Liberada en FEL3 o Pasa a FEL Posterior</p>
+      <div id="ficha-restricciones-container" style="background:#f7fafc;border:1px solid var(--border);border-radius:6px;padding:1rem;margin-bottom:1rem;">
+        <p style="color:var(--muted);text-align:center;">Se cargarán automáticamente las restricciones registradas...</p>
+      </div>
+
+      <h3 style="margin-top:1rem;">Consideraciones para FEL Posterior</h3>
+      <textarea id="ficha-fel-siguiente" placeholder="¿Qué debe profundizarse en la siguiente fase?"></textarea>
+
+      <div class="btn-group" style="justify-content:center;margin-top:1.5rem;gap:1rem;flex-wrap:wrap;">
+        <button class="btn btn-outline" onclick="guardarFicha()">💾 Guardar Ficha</button>
+        <button class="btn btn-outline" onclick="descargarFicha()" style="background:#f0f4f8;border-color:#3182ce;color:#3182ce;">⬇️ Descargar Datos</button>
+        <button class="btn btn-outline" id="cargarFichaBtn" style="background:#f0f4f8;border-color:#38a169;color:#38a169;">⬆️ Cargar Datos</button>
+        <button class="btn btn-outline" onclick="imprimirFichaActual()" style="background:#f0f4f8;border-color:#e87c1e;color:#e87c1e;">📄 Imprimir Ficha</button>
+      </div>
+      <input type="file" id="cargarFichaInput" accept=".json" style="display:none;" onchange="cargarFichaDelArchivo(event)">
+    </div>
+
+    <div class="card">
+      <h3>📊 Cronograma del CWP</h3>
+      <p style="font-size:0.9rem;color:var(--muted);margin-bottom:1rem;">Línea de tiempo destacando el período de este CWP</p>
+      <div id="ficha-gantt-container" style="background:#f7fafc;border:1px solid var(--border);border-radius:8px;padding:1rem;min-height:150px;">
+        <p style="color:var(--muted);text-align:center;">Selecciona un CWP para ver su cronograma</p>
+      </div>
+    </div>
+
+    <div class="btn-group" style="justify-content:center;margin-top:1.5rem;gap:0.75rem;flex-wrap:wrap;">
+      <button class="btn btn-outline" onclick="abrirModalExportar()" style="background:#f0f4f8;border-color:#3182ce;color:#3182ce;">⬇️ Descargar</button>
+      <button class="btn btn-outline" id="cargarProyectoBtnFicha" style="background:#f0f4f8;border-color:#38a169;color:#38a169;">⬆️ Cargar</button>
+    </div>
+
+    <div class="btn-group" style="justify-content:center;margin-top:1rem;">
+      <button class="btn btn-primary" onclick="showTab('planificacion')">❮ Anterior</button>
+      <button class="btn btn-accent" onclick="showTab('resultados')">Siguiente: Resultados ➔</button>
+    </div>
+  </div>
+
+  <!-- Tab: Resultados -->
+  <div id="tab-resultados" class="section">
+    <div class="card">
+      <h2>📊 Resumen del Taller</h2>
+    </div>
+
+    <!-- Seccion: Vista Previa Documento -->
+    <div id="seccion-previa" style="display:block;">
+      <div class="card">
+        <h3>👁️ Vista Previa del Documento PDF</h3>
+        <p style="color:var(--muted);margin-bottom:1rem;">Previsualización de cómo se verá el informe antes de imprimirlo.</p>
+        <div class="btn-group" style="margin-bottom:1rem;gap:0.75rem;flex-wrap:wrap;">
+          <button class="btn btn-accent" onclick="generarVistaPreviaDocumento()">🔄 Actualizar Vista Previa</button>
+          <button class="btn btn-outline" onclick="exportarPDF()" style="background:#f0f4f8;border-color:#d69e2e;color:#d69e2e;">📄 Exportar PDF</button>
+          <button class="btn btn-outline" onclick="descargarTodoElProyecto()" style="background:#f0f4f8;border-color:#3182ce;color:#3182ce;">⬇️ Descargar Proyecto</button>
+          <button class="btn btn-outline" id="cargarProyectoBtnResultados" style="background:#f0f4f8;border-color:#38a169;color:#38a169;">⬆️ Cargar Proyecto</button>
+        </div>
+        <input type="file" id="cargarProyectoInput" accept=".json" style="display:none;" onchange="cargarProyectoDelArchivo(event)">
+      </div>
+
+      <div id="preview-documento" style="background:white;border:1px solid var(--border);border-radius:8px;padding:2rem;margin-top:1rem;font-family:'Segoe UI', Tahoma, sans-serif;font-size:0.95rem;line-height:1.6;color:#333;max-height:85vh;overflow-y:auto;box-shadow:var(--shadow);">
+        <p style="color:var(--muted);text-align:center;padding:2rem;">Define CWPs y fichas para ver la previsualización del documento</p>
+      </div>
+    </div>
+
+    <div class="btn-group" style="justify-content:center;margin-top:2rem;">
+      <button class="btn btn-primary" onclick="showTab('ficha')">❮ Anterior</button>
+      <button class="btn btn-outline" onclick="showTab('antecedentes')">Volver al Inicio</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ===== GLOBAL STATE =====
+const disciplinas = [
+  {id:'c', code:'C', name:'Obras Civiles', color:'#e53e3e'},
+  {id:'s', code:'S', name:'Civil Estructural', color:'#3182ce'},
+  {id:'a', code:'A', name:'Arquitectura', color:'#38a169'},
+  {id:'m', code:'M', name:'Mecánica', color:'#805ad5'},
+  {id:'p', code:'P', name:'Cañerías', color:'#d69e2e'},
+  {id:'e', code:'E', name:'Electricidad', color:'#e53e9c'},
+  {id:'i', code:'I', name:'Instrumentación', color:'#0bc5ea'},
+  {id:'h', code:'H', name:'HSEC', color:'#d63031'},
+  {id:'pr', code:'PR', name:'Procurement', color:'#fdcb6e'}
+];
+
+let selectedDisciplinas = new Set();
+let hhEstimates = {};
+let cwpDefinidos = [];
+let restricciones = [];
+let fichas = {};
+let fechas = {};
+
+// ===== FUNCIONES DE HH =====
+function actualizarTotalHH() {
+  const civil = parseInt(document.getElementById('hh-civil').value) || 0;
+  const estructuras = parseInt(document.getElementById('hh-estructuras').value) || 0;
+  const arquitectura = parseInt(document.getElementById('hh-arquitectura').value) || 0;
+  const mecanica = parseInt(document.getElementById('hh-mecanica').value) || 0;
+  const canerias = parseInt(document.getElementById('hh-canerias').value) || 0;
+  const electricidad = parseInt(document.getElementById('hh-electricidad').value) || 0;
+  const instrumentacion = parseInt(document.getElementById('hh-instrumentacion').value) || 0;
+
+  const total = civil + estructuras + arquitectura + mecanica + canerias + electricidad + instrumentacion;
+
+  const totalElement = document.getElementById('total-hh-distribuido');
+
+  if (total === 184050) {
+    totalElement.style.color = '#5a9a68';
+    totalElement.textContent = total.toLocaleString('es-ES');
+  } else if (total > 184050) {
+    totalElement.style.color = '#c0392b';
+    totalElement.textContent = total.toLocaleString('es-ES');
+  } else {
+    totalElement.style.color = '#e87c1e';
+    totalElement.textContent = total.toLocaleString('es-ES');
+  }
+
+  hhEstimates = {
+    c: civil, s: estructuras, a: arquitectura, m: mecanica,
+    p: canerias, e: electricidad, i: instrumentacion
+  };
+}
+
+let disciplinasPersonalizadas = [];
+let cwpsCodificados = {}; // {disciplinaId: [{codigo, descripcion, hh}, ...]}
+
+function agregarDisciplinaPersonalizada() {
+  const input = document.getElementById('nuevaDisciplinaInput');
+  const nombre = input.value.trim().toUpperCase();
+
+  if (!nombre) {
+    alert('Ingresa el nombre de la disciplina');
+    return;
+  }
+
+  if (disciplinasPersonalizadas.find(d => d.name === nombre)) {
+    alert('Esta disciplina ya fue agregada');
+    return;
+  }
+
+  const codigo = nombre.substring(0, 2);
+  const disciplina = {id: 'p_' + Date.now(), code: codigo, name: nombre, color: '#6c757d'};
+  disciplinasPersonalizadas.push(disciplina);
+
+  input.value = '';
+  renderizarDisciplinasPersonalizadas();
+}
+
+function renderizarDisciplinasPersonalizadas() {
+  const container = document.getElementById('disciplinas-personalizadas');
+  container.innerHTML = '';
+
+  disciplinasPersonalizadas.forEach(d => {
+    const chip = document.createElement('div');
+    chip.className = 'discipline-chip' + (selectedDisciplinas.has(d.id) ? ' selected' : '');
+    chip.style.display = 'inline-block';
+    chip.style.marginRight = '0.5rem';
+    chip.textContent = d.name + ' (' + d.code + ')';
+    chip.onclick = () => toggleDisciplina(d.id, chip);
+    container.appendChild(chip);
+  });
+}
+
+// HH estimadas por el experto en constructibilidad
+const hhExperto = {
+  'c': {hh: 80050, label: 'Obras Civiles'}
+};
+
+function generarCodificacionCWP() {
+  const container = document.getElementById('codificacion-cwp-container');
+  let html = '';
+
+  selectedDisciplinas.forEach(dId => {
+    const d = disciplinas.find(x => x.id === dId) || disciplinasPersonalizadas.find(x => x.id === dId);
+    if (!d) return;
+
+    // Calcular HH total de CWPs existentes para esta disciplina
+    const cwpsExistentes = cwpsCodificados[dId] || [];
+    const hhDisciplina = cwpsExistentes.reduce((sum, cwp) => sum + (cwp.hh || 0), 0);
+
+    // Obtener referencia del experto si existe
+    const experto = hhExperto[dId];
+    const expertoHint = experto
+      ? `<div style="background:#fff8e1;border-left:4px solid #e87c1e;border-radius:0 6px 6px 0;padding:0.5rem 0.75rem;margin-bottom:0.75rem;font-size:0.85rem;color:#6b4a1f;">
+           <strong>Dato de Experto en Constructibilidad:</strong> El total estimado para ${d.name} es de <strong>${experto.hh.toLocaleString('es-ES')} HH</strong>
+         </div>`
+      : '';
+
+    html += `
+      <div style="background:#f7fafc;border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:1.5rem;">
+        <h4 style="color:var(--primary);margin-bottom:0.75rem;">${d.name} (${d.code}) - ${hhDisciplina.toLocaleString('es-ES')} HH asignadas</h4>
+        ${expertoHint}
+        <div id="cwps-${dId}" style="margin-bottom:1rem;">`;
+
+    cwpsExistentes.forEach((cwp, idx) => {
+      html += `
+        <div style="background:white;border:1px solid var(--border);border-radius:6px;padding:0.75rem;margin-bottom:0.5rem;">
+          <strong>${cwp.codigo}</strong> - ${cwp.descripcion} (${cwp.hh} HH)
+          <button onclick="removerCWP('${dId}', ${idx})" style="float:right;background:none;border:none;color:#c0392b;cursor:pointer;font-size:1.2rem;">✕</button>
+        </div>`;
+    });
+
+    html += `</div>
+        <div style="display:grid;grid-template-columns:1.2fr 0.8fr 1fr 1fr auto;gap:0.5rem;margin-bottom:1rem;">
+          <div>
+            <label style="font-size:0.85rem;color:var(--muted);">Código CWP (CWP-05-?-NN)</label>
+            <input type="text" id="codigo-${dId}" placeholder="CWP-05-${d.code}-01" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:6px;font-size:0.9rem;" />
+            <small style="color:var(--muted);font-size:0.75rem;">Puedes proponer una letra diferente a ${d.code}</small>
+          </div>
+          <div>
+            <label style="font-size:0.85rem;color:var(--muted);">Letra Prop. (Pos 8)</label>
+            <input type="text" id="letra-${dId}" maxlength="2" placeholder="${d.code}" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:6px;font-size:0.9rem;text-transform:uppercase;" />
+            <small style="color:var(--muted);font-size:0.75rem;">Ej: ${d.code}, X, PR</small>
+          </div>
+          <div>
+            <label style="font-size:0.85rem;color:var(--muted);">Descripción</label>
+            <input type="text" id="desc-${dId}" placeholder="Descripción del paquete" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:6px;font-size:0.9rem;" />
+          </div>
+          <div>
+            <label style="font-size:0.85rem;color:var(--muted);">HH</label>
+            <input type="number" id="hh-cwp-${dId}" placeholder="0" min="0" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:6px;font-size:0.9rem;" />
+          </div>
+          <div style="display:flex;align-items:flex-end;">
+            <button onclick="agregarCWP('${dId}')" class="btn btn-sm btn-accent" style="width:100%;">+ Add</button>
+          </div>
+        </div>
+      </div>`;
+  });
+
+  container.innerHTML = html;
+}
+
+function agregarCWP(dId) {
+  const codigo = document.getElementById('codigo-' + dId).value.trim();
+  const descripcion = document.getElementById('desc-' + dId).value.trim();
+  const hhValor = document.getElementById('hh-cwp-' + dId).value.trim();
+  const hh = hhValor ? parseInt(hhValor) : 0;
+
+  let error = '';
+  if (!codigo) error += '- Código CWP requerido\n';
+  if (!descripcion) error += '- Descripción requerida\n';
+  if (!hhValor || hh <= 0) error += '- HH debe ser mayor a 0\n';
+
+  if (error) {
+    alert('Completa los campos:\n' + error);
+    return;
+  }
+
+  if (!cwpsCodificados[dId]) {
+    cwpsCodificados[dId] = [];
+  }
+
+  cwpsCodificados[dId].push({codigo, descripcion, hh});
+
+  document.getElementById('codigo-' + dId).value = '';
+  document.getElementById('desc-' + dId).value = '';
+  document.getElementById('hh-cwp-' + dId).value = '';
+
+  generarCodificacionCWP();
+  updateCWPList();  // Actualizar lista de CWPs inmediatamente
+}
+
+function removerCWP(dId, idx) {
+  if (cwpsCodificados[dId]) {
+    cwpsCodificados[dId].splice(idx, 1);
+    generarCodificacionCWP();
+    updateCWPList();  // Actualizar lista de CWPs inmediatamente
+  }
+}
+
+// ===== TAB NAVIGATION =====
+function showTab(tabName) {
+  document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+
+  const tabEl = document.getElementById('tab-' + tabName);
+  if(tabEl) tabEl.classList.add('active');
+
+  // Find and highlight the corresponding button by matching onclick content
+  const navButtons = document.querySelectorAll('.nav-btn');
+  navButtons.forEach(btn => {
+    if(btn.getAttribute('onclick') && btn.getAttribute('onclick').includes("'" + tabName + "'")) {
+      btn.classList.add('active');
+    }
+  });
+
+  if(tabName === 'definir') initDefinirTab();
+  if(tabName === 'criterios') initCriteriosTab();
+  if(tabName === 'restricciones') initRestriccionesTab();
+  if(tabName === 'planificacion') initPlanificacionTab();
+  if(tabName === 'ficha') initFichaTab();
+  if(tabName === 'resultados') actualizarResumen();
+}
+
+// ===== DEFINIR CWP TAB =====
+function initDefinirTab() {
+  // Render discipline grid (todas las disponibles, incluyendo distractores)
+  const grid = document.getElementById('discipline-grid');
+  grid.innerHTML = '';
+  disciplinas.forEach(d => {
+    const chip = document.createElement('div');
+    chip.className = 'discipline-chip' + (selectedDisciplinas.has(d.id) ? ' selected' : '');
+    chip.textContent = d.name + ' (' + d.code + ')';
+    chip.onclick = () => toggleDisciplina(d.id, chip);
+    grid.appendChild(chip);
+  });
+
+  // Renderizar disciplinas personalizadas
+  renderizarDisciplinasPersonalizadas();
+
+  // Generar formulario de codificación de CWP
+  generarCodificacionCWP();
+
+  updateCWPList();
+}
+
+function toggleDisciplina(dId, chip) {
+  if(selectedDisciplinas.has(dId)) {
+    selectedDisciplinas.delete(dId);
+    delete hhEstimates[dId];
+    chip.classList.remove('selected');
+  } else {
+    selectedDisciplinas.add(dId);
+    chip.classList.add('selected');
+  }
+  initDefinirTab();
+}
+
+function updateCWPList() {
+  cwpDefinidos = [];
+
+  // Iterar por cada disciplina seleccionada
+  selectedDisciplinas.forEach(dId => {
+    const d = disciplinas.find(x => x.id === dId) || disciplinasPersonalizadas.find(x => x.id === dId);
+    if (!d) return;
+
+    // Si hay CWP codificados para esta disciplina, usarlos
+    if (cwpsCodificados[dId] && cwpsCodificados[dId].length > 0) {
+      cwpsCodificados[dId].forEach((cwp, idx) => {
+        cwpDefinidos.push({
+          id: dId + '_' + idx,
+          code: cwp.codigo,
+          name: d.name,
+          color: d.color,
+          hh: cwp.hh || 0,
+          descripcion: cwp.descripcion
+        });
+      });
+    } else {
+      // Si no hay CWP codificados, crear uno por defecto
+      const hh = hhEstimates[dId] || 0;
+      cwpDefinidos.push({id: dId, code: 'CWP-05-' + d.code + '-01', name: d.name, color: d.color, hh});
+    }
+  });
+
+  const list = document.getElementById('cwp-list');
+  list.innerHTML = '';
+  cwpDefinidos.forEach(cwp => {
+    const tag = document.createElement('div');
+    tag.className = 'cwp-tag';
+    tag.style.background = cwp.color;
+    tag.innerHTML = `${cwp.code}: ${cwp.name}`;
+    list.appendChild(tag);
+  });
+
+  const total = cwpDefinidos.reduce((s, c) => s + (c.hh || 0), 0);
+  document.getElementById('cwp-total').textContent = `Total: ${total.toLocaleString()} HH de 184,050 HH`;
+}
+
+// ===== RESTRICCIONES TAB =====
+// ===== CRITERIOS TAB =====
+let criteriosPorCWP = {}; // {cwpId: 'criterio text'}
+let criterioGeneral = '';
+let estadoRestricciones = {}; // {cwpId: {restId: {estado: 'liberada'|'siguiente', responsable: ''}}}
+let restriccionesLiberadas = {}; // {cwpId: 'texto de restricciones liberadas'}
+
+function initCriteriosTab() {
+  renderCriteriosTable();
+}
+
+function renderCriteriosTable() {
+  const table = document.getElementById('criterios-table');
+  if (!table) return;
+
+  let html = '';
+
+  // Render row per CWP
+  cwpDefinidos.forEach(cwp => {
+    const valor = criteriosPorCWP[cwp.id] || '';
+    html += `
+      <tr>
+        <td style="font-weight:700;color:${cwp.color};">${cwp.code}</td>
+        <td><textarea id="crit-${cwp.id}" oninput="criteriosPorCWP['${cwp.id}']=this.value" style="width:100%;min-height:50px;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.9rem;">${valor}</textarea></td>
+      </tr>
+    `;
+  });
+
+  // Add general row if there are CWPs
+  if (cwpDefinidos.length > 0) {
+    html += `
+      <tr style="background:#f7fafc;font-weight:700;border-top:2px solid var(--primary);">
+        <td style="color:var(--primary);">GENERAL</td>
+        <td><textarea id="crit-general" oninput="criterioGeneral=this.value" style="width:100%;min-height:50px;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.9rem;background:white;">${criterioGeneral}</textarea></td>
+      </tr>
+    `;
+  }
+
+  table.innerHTML = html;
+}
+
+// ===== RESTRICCIONES TAB =====
+let restriccionesPorCWP = {}; // {cwpId: [{texto: '', responsable: ''}, ...]}
+let restriccionGeneral = '';
+
+function initRestriccionesTab() {
+  renderRestriccionesTable();
+}
+
+function agregarRestriccion(cwpId) {
+  if (!restriccionesPorCWP[cwpId]) {
+    restriccionesPorCWP[cwpId] = [];
+  }
+  restriccionesPorCWP[cwpId].push({texto: '', responsable: ''});
+  renderRestriccionesTable();
+  actualizarResumen();
+}
+
+function eliminarRestriccion(cwpId, idx) {
+  if (restriccionesPorCWP[cwpId] && restriccionesPorCWP[cwpId][idx]) {
+    restriccionesPorCWP[cwpId].splice(idx, 1);
+    renderRestriccionesTable();
+    actualizarResumen();
+  }
+}
+
+function actualizarRestriccion(cwpId, idx, campo, valor) {
+  if (!restriccionesPorCWP[cwpId]) {
+    restriccionesPorCWP[cwpId] = [];
+  }
+  if (!restriccionesPorCWP[cwpId][idx]) {
+    restriccionesPorCWP[cwpId][idx] = {texto: '', responsable: ''};
+  }
+  restriccionesPorCWP[cwpId][idx][campo] = valor;
+  actualizarResumen();  // Actualizar resumen en tiempo real
+}
+
+function renderRestriccionesTable() {
+  const table = document.getElementById('restricciones-table');
+  if (!table) return;
+
+  let html = '';
+
+  // Render rows per CWP con lista de restricciones numeradas
+  cwpDefinidos.forEach(cwp => {
+    const restricciones = restriccionesPorCWP[cwp.id] || [];
+
+    if (restricciones.length === 0) {
+      // Si no hay restricciones, mostrar un mensaje vacío con botón
+      html += `<tr style="border-bottom:1px solid var(--border);background:#f9fafb;">
+        <td style="font-weight:700;color:${cwp.color};padding:0.75rem;">${cwp.code}</td>
+        <td colspan="2" style="padding:0.75rem;text-align:center;">
+          <button onclick="agregarRestriccion('${cwp.id}')" style="background:transparent;border:1px solid var(--accent);color:var(--accent);padding:0.35rem 0.75rem;border-radius:4px;cursor:pointer;font-size:0.85rem;font-weight:600;">+ Agregar restricción</button>
+        </td>
+      </tr>`;
+    } else {
+      // Restricciones numeradas
+      restricciones.forEach((rest, idx) => {
+        html += `<tr style="border-bottom:1px solid #e0e0e0;">
+          <td style="padding:0.75rem;color:var(--muted);text-align:center;font-weight:600;${idx === 0 ? 'border-top:2px solid ' + cwp.color : ''}">${idx === 0 ? cwp.code + '<br>' : ''}<span style="color:var(--primary);">${idx + 1}</span></td>
+          <td style="padding:0.75rem;">
+            <textarea id="rest-${cwp.id}-${idx}" style="width:100%;min-height:50px;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.9rem;font-family:inherit;resize:vertical;" placeholder="Descripción de la restricción..." oninput="actualizarRestriccion('${cwp.id}', ${idx}, 'texto', this.value)">${rest.texto}</textarea>
+          </td>
+          <td style="padding:0.75rem;">
+            <div style="display:flex;gap:0.5rem;">
+              <input type="text" style="flex:1;padding:0.35rem;border:1px solid var(--border);border-radius:4px;font-size:0.85rem;" placeholder="Responsable" value="${rest.responsable}" oninput="actualizarRestriccion('${cwp.id}', ${idx}, 'responsable', this.value)">
+              <button onclick="eliminarRestriccion('${cwp.id}', ${idx})" style="background:none;border:none;color:#c0392b;cursor:pointer;font-size:1.2rem;padding:0.25rem;min-width:32px;">✕</button>
+            </div>
+          </td>
+        </tr>`;
+      });
+
+      // Botón agregar restricción al final del CWP
+      html += `<tr style="border-bottom:2px solid ${cwp.color};background:#f7fafc;">
+        <td colspan="3" style="padding:0.5rem;text-align:center;">
+          <button onclick="agregarRestriccion('${cwp.id}')" style="background:transparent;border:1px solid var(--accent);color:var(--accent);padding:0.35rem 0.75rem;border-radius:4px;cursor:pointer;font-size:0.85rem;font-weight:600;">+ Agregar restricción</button>
+        </td>
+      </tr>`;
+    }
+  });
+
+  // Add general row if there are CWPs
+  if (cwpDefinidos.length > 0) {
+    html += `
+      <tr style="background:#f7fafc;font-weight:700;border-top:3px solid var(--primary);">
+        <td style="color:var(--primary);padding:0.75rem;">GENERAL</td>
+        <td colspan="2" style="color:var(--primary);padding:0.75rem;">Restricción General</td>
+      </tr>
+      <tr>
+        <td colspan="3" style="padding:0.75rem;"><textarea id="rest-general" oninput="restriccionGeneral=this.value" style="width:100%;min-height:60px;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.9rem;font-family:inherit;background:white;resize:vertical;">${restriccionGeneral}</textarea></td>
+      </tr>
+    `;
+  }
+
+  table.innerHTML = html;
+}
+
+// ===== PLANIFICACION TAB =====
+function initPlanificacionTab() {
+  const table = document.getElementById('planificacion-table');
+  table.innerHTML = '<table style="width:100%;border-collapse:collapse;"><tr><th style="background:var(--primary);color:white;padding:0.75rem;text-align:left;">CWP</th><th style="background:var(--primary);color:white;padding:0.75rem;text-align:left;">Disciplina</th><th style="background:var(--primary);color:white;padding:0.75rem;text-align:right;">HH</th><th style="background:var(--primary);color:white;padding:0.75rem;text-align:center;">Fecha Inicio</th><th style="background:var(--primary);color:white;padding:0.75rem;text-align:center;">Fecha Término</th><th style="background:var(--primary);color:white;padding:0.75rem;text-align:center;">Duración</th></tr><tbody id="plan-body"></tbody></table>';
+
+  const body = document.getElementById('plan-body');
+  cwpDefinidos.forEach(cwp => {
+    const row = document.createElement('tr');
+    row.style.borderBottom = '1px solid var(--border)';
+    const inicioVal = fechas[cwp.id]?.inicio ? convertYYYYMMDDtoDDMMYYYY(fechas[cwp.id].inicio) : '';
+    const terminoVal = fechas[cwp.id]?.termino ? convertYYYYMMDDtoDDMMYYYY(fechas[cwp.id].termino) : '';
+    row.innerHTML = `
+      <td style="color:${cwp.color};font-weight:700;padding:0.75rem;">${cwp.code}</td>
+      <td style="padding:0.75rem;">${cwp.name}</td>
+      <td style="text-align:right;padding:0.75rem;">${cwp.hh}</td>
+      <td style="padding:0.75rem;text-align:center;"><input type="text" class="plan-date" data-cwpid="${cwp.id}" data-type="inicio" placeholder="DD/MM/YYYY" value="${inicioVal}" style="width:120px;text-align:center;" maxlength="10"></td>
+      <td style="padding:0.75rem;text-align:center;"><input type="text" class="plan-date" data-cwpid="${cwp.id}" data-type="termino" placeholder="DD/MM/YYYY" value="${terminoVal}" style="width:120px;text-align:center;" maxlength="10"></td>
+      <td id="dur-${cwp.id}" style="text-align:center;padding:0.75rem;">-</td>
+    </tr>`;
+    body.appendChild(row);
+  });
+
+  // Initialize Flatpickr date pickers for all date inputs
+  document.querySelectorAll('.plan-date').forEach(input => {
+    flatpickr(input, {
+      mode: 'single',
+      dateFormat: 'd/m/Y',  // DD/MM/YYYY format
+      locale: 'es',
+      allowInput: true,
+      onChange: function(selectedDates, dateStr, instance) {
+        const cwpId = instance.element.getAttribute('data-cwpid');
+        const type = instance.element.getAttribute('data-type');
+        if(!fechas[cwpId]) fechas[cwpId] = {};
+        // Convert DD/MM/YYYY to YYYY-MM-DD for internal storage
+        const converted = convertDDMMYYYYtoYYYYMMDD(dateStr);
+        if(converted) {
+          fechas[cwpId][type] = converted;
+          instance.element.value = dateStr;
+          updateGantt();
+        } else {
+          instance.element.value = '';
+          fechas[cwpId][type] = '';
+          updateGantt();
+        }
+      }
+    });
+  });
+
+  updateGantt();
+}
+
+// ===== FUNCIONES DE CONVERSIÓN DE FECHAS =====
+function convertDDMMYYYYtoYYYYMMDD(ddmmyyyy) {
+  if(!ddmmyyyy || typeof ddmmyyyy !== 'string') return null;
+  const parts = ddmmyyyy.trim().split('/');
+  if(parts.length !== 3) return null;
+  const day = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10);
+  const year = parseInt(parts[2], 10);
+  if(isNaN(day) || isNaN(month) || isNaN(year) || day < 1 || day > 31 || month < 1 || month > 12) return null;
+  const yyyy = ('0000' + year).slice(-4);
+  const mm = ('00' + month).slice(-2);
+  const dd = ('00' + day).slice(-2);
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function convertYYYYMMDDtoDDMMYYYY(yyyymmdd) {
+  if(!yyyymmdd || typeof yyyymmdd !== 'string') return '';
+  const parts = yyyymmdd.trim().split('-');
+  if(parts.length !== 3) return '';
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10);
+  const day = parseInt(parts[2], 10);
+  if(isNaN(day) || isNaN(month) || isNaN(year)) return '';
+  const dd = ('00' + day).slice(-2);
+  const mm = ('00' + month).slice(-2);
+  return `${dd}/${mm}/${year}`;
+}
+
+function updateGantt() {
+  // Gantt chart real - VERSIÓN FINAL CORREGIDA
+
+  // Helper: Parse date in YYYY-MM-DD format (from HTML input type="date")
+  function parseDate(dateStr) {
+    if(!dateStr || typeof dateStr !== 'string') return null;
+    const parts = dateStr.trim().split('-');
+    if(parts.length !== 3) return null;
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10);
+    const day = parseInt(parts[2], 10);
+    return new Date(year, month - 1, day);
+  }
+
+  // Collect all valid date pairs
+  const validCWPs = [];
+  let minDate = null;
+  let maxDate = null;
+
+  cwpDefinidos.forEach(cwp => {
+    const inicio = fechas[cwp.id]?.inicio;
+    const termino = fechas[cwp.id]?.termino;
+
+    if(inicio && termino && inicio.length === 10 && termino.length === 10) {
+      const siDate = parseDate(inicio);
+      const tiDate = parseDate(termino);
+
+      if(siDate && tiDate && siDate <= tiDate) {
+        validCWPs.push({cwp, inicio: siDate, termino: tiDate});
+        if(!minDate || siDate < minDate) minDate = siDate;
+        if(!maxDate || tiDate > maxDate) maxDate = tiDate;
+      }
+    }
+  });
+
+  if(!minDate || !maxDate || validCWPs.length === 0) {
+    document.getElementById('gantt-container').innerHTML = '<p style="color:var(--muted);text-align:center;padding:2rem;">Ingresa fechas válidas en la tabla de Planificación para ver el Gantt chart</p>';
+    return;
+  }
+
+  // Ensure proper date range
+  minDate = new Date(minDate);
+  maxDate = new Date(maxDate);
+
+  // Calculate total weeks
+  const daysDiff = Math.floor((maxDate - minDate) / (1000*60*60*24));
+  const totalWeeks = Math.ceil(daysDiff / 7) + 1;
+
+  // Generate table header
+  let html = '<div style="font-size:0.75rem;overflow-x:auto;margin-top:1rem;"><table style="border-collapse:collapse;width:100%;"><tr>';
+  html += '<th style="background:var(--primary);color:white;padding:0.5rem;min-width:110px;text-align:left;position:sticky;left:0;z-index:10;border:1px solid #666;">CWP</th>';
+
+  // Generate date headers (weekly)
+  for(let w = 0; w < totalWeeks; w++) {
+    const weekDate = new Date(minDate);
+    weekDate.setDate(weekDate.getDate() + (w * 7));
+    const dayNum = ('0' + weekDate.getDate()).slice(-2);
+    const monthShort = weekDate.toLocaleDateString('es-ES', {month:'short'}).substring(0,3);
+    html += `<th style="background:var(--primary);color:white;padding:0.25rem;width:40px;border:1px solid #666;text-align:center;font-size:0.65rem;font-weight:700;">${dayNum}/${monthShort}</th>`;
+  }
+  html += '</tr>';
+
+  // Generate data rows
+  cwpDefinidos.forEach(cwp => {
+    const cwpData = validCWPs.find(v => v.cwp.id === cwp.id);
+    html += '<tr>';
+    html += `<td style="background:white;padding:0.5rem;min-width:110px;font-weight:700;color:${cwp.color};position:sticky;left:0;z-index:5;border:1px solid #ddd;overflow:hidden;text-overflow:ellipsis;">${cwp.code}</td>`;
+
+    if(cwpData) {
+      const {inicio, termino} = cwpData;
+
+      // Calculate duration in weeks
+      const daysDuration = Math.floor((termino - inicio) / (1000*60*60*24));
+      const semanas = Math.max(1, Math.ceil(daysDuration / 7));
+
+      // Update duration cell
+      const durCell = document.getElementById('dur-' + cwp.id);
+      if(durCell) durCell.textContent = semanas + (semanas === 1 ? ' semana' : ' semanas');
+
+      // For each week, check if CWP is active
+      for(let w = 0; w < totalWeeks; w++) {
+        const weekStartDate = new Date(minDate);
+        weekStartDate.setDate(weekStartDate.getDate() + (w * 7));
+        const weekEndDate = new Date(weekStartDate);
+        weekEndDate.setDate(weekEndDate.getDate() + 6);
+
+        // Check if CWP overlaps with this week
+        const cwpActive = (inicio <= weekEndDate && termino >= weekStartDate);
+
+        const tdStyle = cwpActive
+          ? `background:${cwp.color};opacity:0.75;border:1px solid #666;height:40px;`
+          : `background:transparent;border:1px solid #e0e0e0;height:40px;`;
+        html += `<td style="${tdStyle}"></td>`;
+      }
+    } else {
+      // CWP sin fechas
+      for(let w = 0; w < totalWeeks; w++) {
+        html += `<td style="background:transparent;border:1px solid #e0e0e0;height:40px;"></td>`;
+      }
+    }
+    html += '</tr>';
+  });
+
+  html += '</table></div>';
+  document.getElementById('gantt-container').innerHTML = html;
+
+  // Update visualizer and comparison chart
+  actualizarVisualizadorInforme();
+}
+
+// ===== FICHA CWP =====
+// Available CWP images for selection
+const cwpImagenes = [
+  {file: 'cwp-01.png', label: 'Disciplina 1'},
+  {file: 'cwp-02.png', label: 'Disciplina 2'},
+  {file: 'cwp-03.png', label: 'Disciplina 3'},
+  {file: 'cwp-04.png', label: 'Disciplina 4'},
+  {file: 'cwp-05.png', label: 'Disciplina 5'},
+  {file: 'cwp-06.png', label: 'Disciplina 6'},
+  {file: 'cwp-07.png', label: 'Disciplina 7'}
+];
+
+function initFichaTab() {
+  const selector = document.getElementById('cwp-selector');
+  selector.innerHTML = '<option value="">-- Selecciona un CWP --</option>';
+  cwpDefinidos.forEach(cwp => {
+    const opt = document.createElement('option');
+    opt.value = cwp.id;
+    opt.textContent = cwp.code + ': ' + cwp.name;
+    selector.appendChild(opt);
+  });
+
+  // Initialize image gallery
+  renderImageGallery();
+}
+
+function renderImageGallery() {
+  const gallery = document.getElementById('image-gallery');
+  gallery.innerHTML = '';
+
+  cwpImagenes.forEach(img => {
+    const thumbnail = document.createElement('div');
+    thumbnail.style.cssText = 'cursor:pointer;border:2px solid var(--border);border-radius:8px;overflow:hidden;transition:all 0.2s;background:white;position:relative;';
+    thumbnail.className = 'cwp-thumbnail';
+    thumbnail.setAttribute('data-file', img.file);
+
+    // Create actual image element
+    const imgElement = document.createElement('img');
+    imgElement.src = './cwp-images/' + img.file;
+    imgElement.alt = img.label;
+    imgElement.style.cssText = 'width:100%;height:140px;object-fit:cover;display:block;';
+
+    thumbnail.innerHTML = '';
+    thumbnail.appendChild(imgElement);
+
+    // Add zoom icon on hover
+    const zoomIcon = document.createElement('div');
+    zoomIcon.innerHTML = '🔍';
+    zoomIcon.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:2rem;background:rgba(0,0,0,0.6);width:100%;height:100%;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s;';
+    thumbnail.appendChild(zoomIcon);
+
+    thumbnail.onmouseover = () => {
+      thumbnail.style.borderColor = 'var(--accent)';
+      zoomIcon.style.opacity = '1';
+    };
+    thumbnail.onmouseout = () => {
+      const selected = document.querySelector('.cwp-thumbnail.selected');
+      thumbnail.style.borderColor = selected === thumbnail ? 'var(--accent)' : 'var(--border)';
+      zoomIcon.style.opacity = '0';
+    };
+
+    // Click to select or expand
+    thumbnail.onclick = (e) => {
+      e.stopPropagation();
+      selectImage(img.file, img.label, thumbnail);
+      openImageModal(img.file, img.label);
+    };
+
+    gallery.appendChild(thumbnail);
+  });
+}
+
+function selectImage(filename, label, element) {
+  // Remove previous selection
+  document.querySelectorAll('.cwp-thumbnail.selected').forEach(el => {
+    el.style.borderColor = 'var(--border)';
+    el.style.backgroundColor = 'white';
+    el.classList.remove('selected');
+  });
+
+  // Select new image
+  element.classList.add('selected');
+  element.style.borderColor = 'var(--accent)';
+  element.style.backgroundColor = '#fef3e8';
+
+  // Store selection
+  const cwpId = document.getElementById('cwp-selector').value;
+  if(cwpId && !fichas[cwpId]) fichas[cwpId] = {};
+  if(cwpId) fichas[cwpId].imagen = filename;
+
+  // Update preview with actual image
+  const preview = document.getElementById('ficha-selected-image');
+  const noImageText = document.getElementById('no-image-text');
+
+  // Create actual image element
+  const imgHtml = '<img src="./cwp-images/' + filename + '" alt="' + label + '" style="width:100%;max-width:400px;height:auto;border-radius:8px;display:block;margin:0 auto;box-shadow:0 2px 8px rgba(0,0,0,0.1);cursor:pointer;" onclick="openImageModal(\'' + filename + '\', \'' + label + '\')">';
+
+  preview.innerHTML = imgHtml;
+  preview.style.display = 'block';
+  noImageText.style.display = 'none';
+}
+
+function openImageModal(filename, label) {
+  const modal = document.getElementById('imageModal');
+  const modalImage = document.getElementById('modalImage');
+  modalImage.src = './cwp-images/' + filename;
+  modalImage.alt = label;
+  modal.classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeImageModal(event) {
+  // If event is passed, make sure we're clicking on the modal itself, not the content
+  if(event && event.target.id !== 'imageModal') return;
+
+  const modal = document.getElementById('imageModal');
+  modal.classList.remove('show');
+  document.body.style.overflow = 'auto';
+}
+
+// Close modal with Escape key
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Escape') closeImageModal();
+});
+
+// ===== INICIALIZAR DATE PICKERS PARA FICHA =====
+function initFichaDatePickers(cwpId) {
+  // Destruir instancias previas de Flatpickr si existen
+  const inicioInput = document.getElementById('ficha-inicio');
+  const terminoInput = document.getElementById('ficha-termino');
+
+  if(inicioInput._flatpickr) inicioInput._flatpickr.destroy();
+  if(terminoInput._flatpickr) terminoInput._flatpickr.destroy();
+
+  // Inicializar Flatpickr para fecha inicio
+  flatpickr(inicioInput, {
+    mode: 'single',
+    dateFormat: 'd/m/Y',  // DD/MM/YYYY format
+    locale: 'es',
+    allowInput: true,
+    onChange: function(selectedDates, dateStr, instance) {
+      const converted = convertDDMMYYYYtoYYYYMMDD(dateStr);
+      if(converted) {
+        if(!fechas[cwpId]) fechas[cwpId] = {};
+        fechas[cwpId].inicio = converted;
+        calcularDuracion();
+      }
+    }
+  });
+
+  // Inicializar Flatpickr para fecha término
+  flatpickr(terminoInput, {
+    mode: 'single',
+    dateFormat: 'd/m/Y',  // DD/MM/YYYY format
+    locale: 'es',
+    allowInput: true,
+    onChange: function(selectedDates, dateStr, instance) {
+      const converted = convertDDMMYYYYtoYYYYMMDD(dateStr);
+      if(converted) {
+        if(!fechas[cwpId]) fechas[cwpId] = {};
+        fechas[cwpId].termino = converted;
+        calcularDuracion();
+      }
+    }
+  });
+}
+
+// ===== CÁLCULO DE DURACIÓN EN SEMANAS =====
+function calcularDuracion() {
+  const inicioInput = document.getElementById('ficha-inicio');
+  const terminoInput = document.getElementById('ficha-termino');
+  const duracionField = document.getElementById('ficha-duracion');
+
+  const inicio = inicioInput.value; // Format: DD/MM/YYYY
+  const termino = terminoInput.value; // Format: DD/MM/YYYY
+
+  if(!inicio || !termino) {
+    duracionField.value = '';
+    return;
+  }
+
+  try {
+    // Convert DD/MM/YYYY to YYYY-MM-DD for processing
+    const inicioYYYYMMDD = convertDDMMYYYYtoYYYYMMDD(inicio);
+    const terminoYYYYMMDD = convertDDMMYYYYtoYYYYMMDD(termino);
+
+    if(!inicioYYYYMMDD || !terminoYYYYMMDD) {
+      duracionField.value = '';
+      return;
+    }
+
+    const fechaInicio = new Date(inicioYYYYMMDD + 'T00:00:00');
+    const fechaTermino = new Date(terminoYYYYMMDD + 'T00:00:00');
+
+    if(isNaN(fechaInicio.getTime()) || isNaN(fechaTermino.getTime())) {
+      duracionField.value = '';
+      return;
+    }
+
+    // Calculate days difference and convert to weeks
+    const daysDiff = Math.floor((fechaTermino - fechaInicio) / (1000*60*60*24));
+    const semanas = Math.ceil(daysDiff / 7);
+
+    // Format: "2 semanas" or "1 semana" (singular/plural)
+    const duracion = Math.max(0, semanas);
+    duracionField.value = duracion + (duracion === 1 ? ' semana' : ' semanas');
+  } catch(e) {
+    duracionField.value = '';
+  }
+}
+
+function cargarFicha() {
+  const cwpId = document.getElementById('cwp-selector').value;
+  if(!cwpId) {
+    // Clear form if no CWP selected
+    document.getElementById('ficha-codigo').value = '';
+    document.getElementById('ficha-desc').value = '';
+    document.getElementById('ficha-antecedentes').value = '';
+    document.getElementById('ficha-inicio').value = '';
+    document.getElementById('ficha-termino').value = '';
+    document.getElementById('ficha-hh').value = '';
+    document.getElementById('ficha-criterios-container').innerHTML = '<p style="color:var(--muted);text-align:center;">Sin criterios registrados</p>';
+    document.getElementById('ficha-restricciones-container').innerHTML = '<p style="color:var(--muted);text-align:center;">Sin restricciones registradas</p>';
+    document.getElementById('ficha-fel-siguiente').value = '';
+    document.getElementById('ficha-selected-image').style.display = 'none';
+    document.getElementById('no-image-text').style.display = 'block';
+    return;
+  }
+
+  const cwp = cwpDefinidos.find(c => c.id === cwpId);
+  const f = fichas[cwpId] || {};
+
+  document.getElementById('ficha-codigo').value = f.codigo || cwp.code;
+  // Copiar descripción de Definir CWP si no existe descripción guardada en ficha
+  const descripcion = f.desc || cwp.descripcion || '';
+  document.getElementById('ficha-desc').value = descripcion;
+  document.getElementById('ficha-antecedentes').value = f.antecedentes || '';
+  const inicioVal = f.inicio || (fechas[cwpId]?.inicio || '');
+  const terminoVal = f.termino || (fechas[cwpId]?.termino || '');
+  document.getElementById('ficha-inicio').value = inicioVal ? convertYYYYMMDDtoDDMMYYYY(inicioVal) : '';
+  document.getElementById('ficha-termino').value = terminoVal ? convertYYYYMMDDtoDDMMYYYY(terminoVal) : '';
+
+  // Mostrar HH: prioridad a HH guardada en ficha, luego HH del CWP, luego 0
+  const hhValue = f.hh !== undefined && f.hh !== null ? f.hh : (cwp.hh !== undefined && cwp.hh !== null ? cwp.hh : 0);
+  document.getElementById('ficha-hh').value = hhValue;
+  document.getElementById('ficha-fel-siguiente').value = f.fel || '';
+
+  // Initialize Flatpickr for Ficha dates
+  initFichaDatePickers(cwpId);
+
+  // Cargar criterios automáticamente
+  cargarCriteriosEnFicha(cwpId);
+
+  // Cargar restricciones automáticamente
+  cargarRestriccionesEnFicha(cwpId);
+
+  // Calculate duration if dates are set
+  calcularDuracion();
+
+  // Load selected image if available
+  if(f.imagen) {
+    const imagenObj = cwpImagenes.find(img => img.file === f.imagen);
+    const label = imagenObj ? imagenObj.label : 'Imagen';
+
+    // Display actual image
+    const imgHtml = '<img src="./cwp-images/' + f.imagen + '" alt="' + label + '" style="width:100%;max-width:400px;height:auto;border-radius:8px;display:block;margin:0 auto;box-shadow:0 2px 8px rgba(0,0,0,0.1);cursor:pointer;" onclick="openImageModal(\'' + f.imagen + '\', \'' + label + '\')">';
+    const previewContainer = document.getElementById('selected-image-preview');
+    previewContainer.innerHTML = imgHtml;
+    document.getElementById('no-image-text').style.display = 'none';
+
+    // Highlight the selected thumbnail in gallery
+    document.querySelectorAll('.cwp-thumbnail').forEach(el => {
+      el.classList.remove('selected');
+      el.style.borderColor = 'var(--border)';
+      el.style.backgroundColor = 'white';
+    });
+    const selectedThumb = document.querySelector(`.cwp-thumbnail[data-file="${f.imagen}"]`);
+    if(selectedThumb) {
+      selectedThumb.classList.add('selected');
+      selectedThumb.style.borderColor = 'var(--accent)';
+      selectedThumb.style.backgroundColor = '#fef3e8';
+    }
+  } else {
+    document.getElementById('ficha-selected-image').style.display = 'none';
+    document.getElementById('no-image-text').style.display = 'block';
+  }
+
+  // Generate mini Gantt for this CWP
+  generarMiniGanttFicha(cwpId);
+}
+
+function cargarCriteriosEnFicha(cwpId) {
+  const container = document.getElementById('ficha-criterios-container');
+  const criterio = criteriosPorCWP[cwpId] || '';
+
+  if (!criterio) {
+    container.innerHTML = '<p style="color:var(--muted);font-size:0.9rem;"><em>Sin criterios de quiebre registrados en la sección Criterios</em></p>';
+  } else {
+    container.innerHTML = `<p style="font-size:0.9rem;line-height:1.6;white-space:pre-wrap;">${criterio}</p>`;
+  }
+}
+
+function cargarRestriccionesEnFicha(cwpId) {
+  const container = document.getElementById('ficha-restricciones-container');
+  const restricciones = restriccionesPorCWP[cwpId] || [];
+
+  if (restricciones.length === 0) {
+    container.innerHTML = '<p style="color:var(--muted);font-size:0.9rem;"><em>Sin restricciones registradas en la sección Restricciones</em></p>';
+    return;
+  }
+
+  let html = `
+    <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+      <tr style="background:var(--primary);color:white;">
+        <th style="padding:0.5rem;text-align:center;width:40px;border-bottom:1px solid var(--border);">#</th>
+        <th style="padding:0.5rem;text-align:left;border-bottom:1px solid var(--border);">Restricción</th>
+        <th style="padding:0.5rem;text-align:left;width:140px;border-bottom:1px solid var(--border);">Estado</th>
+        <th style="padding:0.5rem;text-align:left;width:140px;border-bottom:1px solid var(--border);">Responsable</th>
+      </tr>
+  `;
+
+  restricciones.forEach((rest, idx) => {
+    const restKey = `rest-${cwpId}-${idx}`;
+    html += `
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:0.5rem;text-align:center;font-weight:600;color:var(--primary);">${idx + 1}</td>
+        <td style="padding:0.5rem;vertical-align:top;"><span style="white-space:pre-wrap;">${rest.texto}</span></td>
+        <td style="padding:0.5rem;">
+          <select id="estado-${restKey}" style="width:100%;padding:0.35rem;border:1px solid var(--border);border-radius:4px;font-size:0.85rem;">
+            <option value="">-- Selecciona --</option>
+            <option value="liberada">Liberada en FEL3</option>
+            <option value="siguiente">Pasa a FEL Posterior</option>
+          </select>
+        </td>
+        <td style="padding:0.5rem;">
+          <input type="text" id="resp-${restKey}" placeholder="Responsable" value="${rest.responsable}" style="width:100%;padding:0.35rem;border:1px solid var(--border);border-radius:4px;font-size:0.85rem;" />
+        </td>
+      </tr>
+    `;
+  });
+
+  html += '</table>';
+  container.innerHTML = html;
+
+  // Restore previous states if exists
+  if (estadoRestricciones[cwpId]) {
+    restricciones.forEach((rest, idx) => {
+      const restKey = `rest-${cwpId}-${idx}`;
+      const select = document.getElementById('estado-' + restKey);
+      const respInput = document.getElementById('resp-' + restKey);
+
+      if (select && estadoRestricciones[cwpId][idx]) {
+        select.value = estadoRestricciones[cwpId][idx].estado || '';
+      }
+      if (respInput && estadoRestricciones[cwpId][idx]) {
+        respInput.value = estadoRestricciones[cwpId][idx].responsable || '';
+      }
+    });
+  }
+}
+
+function guardarFicha() {
+  const cwpId = document.getElementById('cwp-selector').value;
+  if(!cwpId) { alert('Selecciona un CWP primero'); return; }
+
+  // Guardar estado de restricciones numeradas
+  const restricciones = restriccionesPorCWP[cwpId] || [];
+  estadoRestricciones[cwpId] = [];
+
+  restricciones.forEach((rest, idx) => {
+    const restKey = `rest-${cwpId}-${idx}`;
+    const estadoSelect = document.getElementById('estado-' + restKey);
+    const respInput = document.getElementById('resp-' + restKey);
+
+    estadoRestricciones[cwpId][idx] = {
+      estado: estadoSelect ? estadoSelect.value : '',
+      responsable: respInput ? respInput.value : ''
+    };
+  });
+
+  // Convert DD/MM/YYYY to YYYY-MM-DD for internal storage
+  const inicioVal = document.getElementById('ficha-inicio').value;
+  const terminoVal = document.getElementById('ficha-termino').value;
+  const inicioYYYYMMDD = inicioVal ? convertDDMMYYYYtoYYYYMMDD(inicioVal) : '';
+  const terminoYYYYMMDD = terminoVal ? convertDDMMYYYYtoYYYYMMDD(terminoVal) : '';
+
+  fichas[cwpId] = {
+    codigo: document.getElementById('ficha-codigo').value,
+    desc: document.getElementById('ficha-desc').value,
+    antecedentes: document.getElementById('ficha-antecedentes').value,
+    inicio: inicioYYYYMMDD,
+    termino: terminoYYYYMMDD,
+    hh: document.getElementById('ficha-hh').value,
+    fel: document.getElementById('ficha-fel-siguiente').value,
+    imagen: fichas[cwpId]?.imagen || null,
+    estadoRestricciones: estadoRestricciones[cwpId] || []
+  };
+
+  // Also update fechas object
+  if(inicioYYYYMMDD || terminoYYYYMMDD) {
+    if(!fechas[cwpId]) fechas[cwpId] = {};
+    if(inicioYYYYMMDD) fechas[cwpId].inicio = inicioYYYYMMDD;
+    if(terminoYYYYMMDD) fechas[cwpId].termino = terminoYYYYMMDD;
+  }
+
+  actualizarResumen();
+  actualizarVisualizadorInforme();
+  alert('Ficha guardada correctamente');
+}
+
+// ===== MODALES PARA COPIAR/PEGAR JSON =====
+function abrirModalExportar() {
+  // Verificar que hay datos
+  if(!cwpDefinidos || cwpDefinidos.length === 0) {
+    alert('No hay datos guardados. Por favor completa al menos un CWP.');
+    return;
+  }
+
+  // Preparar datos para exportar desde variables en memoria
+  const datosProyecto = {
+    proyecto: {
+      nombre: 'CWP FEL3 - Planta Reactivos',
+      fecha_generacion: new Date().toISOString(),
+      total_hhestimadas: 184050,
+      total_cwps: cwpDefinidos.length || 0,
+      total_disciplinas: selectedDisciplinas.size || 0
+    },
+    selected_disciplinas: Array.from(selectedDisciplinas),
+    hh_estimates: hhEstimates,
+    disciplinas_personalizadas: disciplinasPersonalizadas,
+    cwps_codificados: cwpsCodificados,
+    cwps_definidos: cwpDefinidos,
+    fichas: fichas,
+    fechas: fechas,
+    criterios_por_cwp: criteriosPorCWP,
+    criterio_general: criterioGeneral,
+    restricciones_por_cwp: restriccionesPorCWP,
+    restriccion_general: restriccionGeneral,
+    estado_restricciones: estadoRestricciones,
+    timestamp: new Date().toISOString()
+  };
+
+  const json = JSON.stringify(datosProyecto, null, 2);
+  document.getElementById('jsonContent').value = json;
+  document.getElementById('jsonModal').style.display = 'flex';
+}
+
+function cerrarJsonModal() {
+  document.getElementById('jsonModal').style.display = 'none';
+}
+
+function cerrarPasteModal() {
+  document.getElementById('pasteJsonModal').style.display = 'none';
+  document.getElementById('pasteJsonContent').value = '';
+}
+
+function abrirModalCargar() {
+  document.getElementById('pasteJsonModal').style.display = 'flex';
+  document.getElementById('pasteJsonContent').value = '';
+  document.getElementById('pasteJsonContent').focus();
+}
+
+function copiarJSON() {
+  const textarea = document.getElementById('jsonContent');
+  textarea.select();
+  document.execCommand('copy');
+  alert('✓ JSON copiado al portapapeles\n\nPuedes pegarlo en un archivo de texto para guardarlo como respaldo.');
+}
+
+function descargarJSON() {
+  try {
+    const json = document.getElementById('jsonContent').value;
+    const blob = new Blob([json], {type: 'text/plain'});
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+
+    const fechaStr = new Date().toISOString().split('T')[0];
+    const horaStr = new Date().toISOString().split('T')[1].substring(0, 8).replace(/:/g, '-');
+    link.download = `proyecto_cwp_${fechaStr}_${horaStr}.txt`;
+
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }, 100);
+
+    alert('✓ Archivo descargado\n\nSi el navegador bloqueó la descarga, usa "Copiar JSON" para guardar los datos.');
+  } catch(error) {
+    alert('Error: ' + error.message);
+  }
+}
+
+function cargarDesdeJSON() {
+  try {
+    const jsonText = document.getElementById('pasteJsonContent').value.trim();
+    if(!jsonText) {
+      alert('Por favor pega el contenido JSON en el área de texto.');
+      return;
+    }
+
+    const datos = JSON.parse(jsonText);
+
+    if(!datos.cwps_definidos || !Array.isArray(datos.cwps_definidos)) {
+      alert('Formato JSON inválido. Asegúrate de haber pegado correctamente.');
+      return;
+    }
+
+    // Restaurar selectedDisciplinas si existe en JSON, sino reconstruir desde cwpDefinidos
+    if(datos.selected_disciplinas && Array.isArray(datos.selected_disciplinas)) {
+      selectedDisciplinas = new Set(datos.selected_disciplinas);
+    } else {
+      // Fallback: reconstruir desde cwpDefinidos si el JSON no tiene selected_disciplinas
+      selectedDisciplinas = new Set();
+      (datos.cwps_definidos || []).forEach(cwp => {
+        // Extraer el ID de disciplina del ID del CWP (formato: "dId_0" o simplemente "dId")
+        const parts = cwp.id.split('_');
+        if(parts.length > 0) {
+          const disciplinaId = parts[0];
+          if(disciplinaId) selectedDisciplinas.add(disciplinaId);
+        }
+      });
+    }
+
+    // Restaurar variables
+    hhEstimates = datos.hh_estimates || {};
+    disciplinasPersonalizadas = datos.disciplinas_personalizadas || [];
+    cwpsCodificados = datos.cwps_codificados || {};
+    cwpDefinidos = datos.cwps_definidos || [];
+    fichas = datos.fichas || {};
+    fechas = datos.fechas || {};
+    criteriosPorCWP = datos.criterios_por_cwp || {};
+    criterioGeneral = datos.criterio_general || '';
+    restriccionesPorCWP = datos.restricciones_por_cwp || {};
+    restriccionGeneral = datos.restriccion_general || '';
+    estadoRestricciones = datos.estado_restricciones || {};
+
+    // Actualizar interfaz
+    setTimeout(() => {
+      const grid = document.getElementById('discipline-grid');
+      if(grid) {
+        let html = '';
+        disciplinas.forEach(d => {
+          const isSelected = selectedDisciplinas.has(d.id);
+          html += `<label style="padding:0.5rem;"><input type="checkbox" onchange="toggleDisciplina('${d.id}')" ${isSelected ? 'checked' : ''} /> <span style="color:${d.color};font-weight:600;">${d.code}</span> ${d.name}</label>`;
+        });
+        grid.innerHTML = html;
+      }
+
+      // Mostrar disciplinas personalizadas
+      const persContainer = document.getElementById('disciplinas-personalizadas');
+      if(persContainer) {
+        if(disciplinasPersonalizadas.length > 0) {
+          let html = '<h4 style="margin-top:1rem;margin-bottom:0.5rem;">Disciplinas Personalizadas Agregadas:</h4><div style="display:flex;flex-wrap:wrap;gap:0.5rem;">';
+          disciplinasPersonalizadas.forEach((d, idx) => {
+            html += `<span style="background:${d.color};color:white;padding:0.35rem 0.75rem;border-radius:4px;font-weight:600;">${d.code} ${d.name}</span>`;
+          });
+          html += '</div>';
+          persContainer.innerHTML = html;
+        } else {
+          persContainer.innerHTML = '';
+        }
+      }
+
+      // NO llamar a updateCWPList() porque eso limpiaría los datos restaurados
+      // En su lugar, solo mostrar los CWPs restaurados
+      const list = document.getElementById('cwp-list');
+      if(list) {
+        list.innerHTML = '';
+        cwpDefinidos.forEach(cwp => {
+          const tag = document.createElement('div');
+          tag.className = 'cwp-tag';
+          tag.style.background = cwp.color;
+          tag.innerHTML = `${cwp.code}: ${cwp.name}`;
+          list.appendChild(tag);
+        });
+      }
+
+      const total = cwpDefinidos.reduce((s, c) => s + (c.hh || 0), 0);
+      const totalEl = document.getElementById('cwp-total');
+      if(totalEl) {
+        totalEl.textContent = `Total: ${total.toLocaleString()} HH de 184,050 HH`;
+      }
+
+      // Ahora sí actualizar las otras tablas
+      renderCriteriosTable();
+      renderRestriccionesTable();
+      initPlanificacionTab();
+      cargarFicha();
+
+      cerrarPasteModal();
+      showTab('definir');
+      alert('✓ Proyecto cargado correctamente\n\nTotal: ' + cwpDefinidos.length + ' CWPs restaurados\nDisciplinas: ' + selectedDisciplinas.size);
+    }, 100);
+
+  } catch(error) {
+    alert('Error al cargar: ' + error.message + '\n\nAsegúrate de haber pegado un JSON válido.');
+    console.error('Load Error:', error);
+  }
+}
+
+// ===== NOTA: localStorage NO se usa =====
+// Los datos se guardan solo mediante descarga de JSON manual
+// Cada recarga de página comienza con estado limpio
+function guardarEnLocalStorage() {
+  // No hace nada - localStorage no se usa
+}
+
+function cargarDelLocalStorage() {
+  // Siempre retorna false - localStorage no se usa
+  return false;
+}
+
+// ===== DESCARGA Y CARGA DE DATOS DE FICHA =====
+function descargarFicha() {
+  const cwpId = document.getElementById('cwp-selector').value;
+  if(!cwpId) {
+    alert('Selecciona un CWP primero');
+    return;
+  }
+
+  const cwp = cwpDefinidos.find(c => c.id === cwpId);
+  const ficha = fichas[cwpId] || {};
+
+  // Crear objeto con todos los datos de la ficha
+  const datosDescarga = {
+    cwp_code: cwp.code,
+    cwp_id: cwpId,
+    timestamp: new Date().toISOString(),
+    datos_ficha: {
+      codigo: ficha.codigo || cwp.code,
+      descripcion: ficha.desc || '',
+      antecedentes: ficha.antecedentes || '',
+      fecha_inicio: ficha.inicio || '',
+      fecha_termino: ficha.termino || '',
+      hh_asignadas: ficha.hh || '',
+      imagen_disciplina: ficha.imagen || null,
+      fel_siguiente: ficha.fel || '',
+      estado_restricciones: estadoRestricciones[cwpId] || []
+    }
+  };
+
+  // Convertir a JSON y descargar
+  const json = JSON.stringify(datosDescarga, null, 2);
+  const blob = new Blob([json], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `ficha_${cwp.code}_${new Date().toISOString().split('T')[0]}.json`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+
+  alert(`Ficha ${cwp.code} descargada correctamente`);
+}
+
+function cargarDatos() {
+  document.getElementById('cargarFichaInput').click();
+}
+
+function cargarFichaDelArchivo(event) {
+  const file = event.target.files[0];
+  if(!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const datos = JSON.parse(e.target.result);
+
+      // Validar estructura
+      if(!datos.cwp_code || !datos.datos_ficha) {
+        alert('Archivo inválido: no contiene los datos esperados');
+        return;
+      }
+
+      // Buscar el CWP por código
+      const cwp = cwpDefinidos.find(c => c.code === datos.cwp_code);
+      if(!cwp) {
+        alert(`No se encontró el CWP ${datos.cwp_code} en los datos actuales`);
+        return;
+      }
+
+      // Cargar datos en el formulario
+      const cwpId = cwp.id;
+      const f = datos.datos_ficha;
+
+      document.getElementById('cwp-selector').value = cwpId;
+      document.getElementById('ficha-codigo').value = f.codigo || '';
+      document.getElementById('ficha-desc').value = f.descripcion || '';
+      document.getElementById('ficha-antecedentes').value = f.antecedentes || '';
+      document.getElementById('ficha-inicio').value = f.fecha_inicio ? convertYYYYMMDDtoDDMMYYYY(f.fecha_inicio) : '';
+      document.getElementById('ficha-termino').value = f.fecha_termino ? convertYYYYMMDDtoDDMMYYYY(f.fecha_termino) : '';
+      document.getElementById('ficha-hh').value = f.hh_asignadas || '';
+      document.getElementById('ficha-fel-siguiente').value = f.fel_siguiente || '';
+
+      // Restaurar estados de restricciones
+      if(f.estado_restricciones && Array.isArray(f.estado_restricciones)) {
+        estadoRestricciones[cwpId] = f.estado_restricciones;
+      }
+
+      // Restaurar imagen si existe
+      if(f.imagen_disciplina) {
+        fichas[cwpId] = fichas[cwpId] || {};
+        fichas[cwpId].imagen = f.imagen_disciplina;
+
+        // Mostrar imagen en preview
+        const imagenObj = cwpImagenes.find(img => img.file === f.imagen_disciplina);
+        const label = imagenObj ? imagenObj.label : 'Imagen';
+        const imgHtml = '<img src="./cwp-images/' + f.imagen_disciplina + '" alt="' + label + '" style="width:100%;max-width:400px;height:auto;border-radius:8px;display:block;margin:0 auto;box-shadow:0 2px 8px rgba(0,0,0,0.1);cursor:pointer;" onclick="openImageModal(\'' + f.imagen_disciplina + '\', \'' + label + '\')">';
+        const previewContainer = document.getElementById('selected-image-preview');
+        previewContainer.innerHTML = imgHtml;
+        document.getElementById('no-image-text').style.display = 'none';
+
+        // Highlight thumbnail
+        document.querySelectorAll('.cwp-thumbnail').forEach(el => {
+          el.classList.remove('selected');
+          el.style.borderColor = 'var(--border)';
+          el.style.backgroundColor = 'white';
+        });
+        const selectedThumb = document.querySelector(`.cwp-thumbnail[data-file="${f.imagen_disciplina}"]`);
+        if(selectedThumb) {
+          selectedThumb.classList.add('selected');
+          selectedThumb.style.borderColor = 'var(--accent)';
+          selectedThumb.style.backgroundColor = '#fef3e8';
+        }
+      }
+
+      // Reinitialize date pickers
+      initFichaDatePickers(cwpId);
+
+      // Load criteria and restrictions
+      cargarCriteriosEnFicha(cwpId);
+      cargarRestriccionesEnFicha(cwpId);
+
+      // Generate Gantt
+      generarMiniGanttFicha(cwpId);
+      calcularDuracion();
+
+      alert(`Ficha ${datos.cwp_code} cargada correctamente desde archivo`);
+    } catch(error) {
+      alert('Error al cargar el archivo: ' + error.message);
+      console.error('Error:', error);
+    }
+  };
+
+  reader.readAsText(file);
+
+  // Reset input para permitir cargar el mismo archivo nuevamente
+  event.target.value = '';
+}
+
+// ===== DESCARGA DE PROYECTO COMPLETO =====
+function descargarProyectoCompleto() {
+  try {
+    // Verificar que hay datos
+    if(!cwpDefinidos || cwpDefinidos.length === 0) {
+      alert('No hay datos guardados. Por favor completa al menos un CWP antes de descargar.');
+      return;
+    }
+
+    // Preparar datos para descargar desde variables en memoria
+    const datosProyecto = {
+      proyecto: {
+        nombre: 'CWP FEL3 - Planta Reactivos',
+        fecha_generacion: new Date().toISOString(),
+        total_hhestimadas: 184050,
+        total_cwps: cwpDefinidos.length || 0,
+        total_disciplinas: selectedDisciplinas.size || 0
+      },
+      selected_disciplinas: Array.from(selectedDisciplinas),
+      hh_estimates: hhEstimates,
+      disciplinas_personalizadas: disciplinasPersonalizadas,
+      cwps_codificados: cwpsCodificados,
+      cwps_definidos: cwpDefinidos,
+      fichas: fichas,
+      fechas: fechas,
+      criterios_por_cwp: criteriosPorCWP,
+      criterio_general: criterioGeneral,
+      restricciones_por_cwp: restriccionesPorCWP,
+      restriccion_general: restriccionGeneral,
+      estado_restricciones: estadoRestricciones,
+      timestamp: new Date().toISOString()
+    };
+
+    // Convertir a JSON y descargar
+    const json = JSON.stringify(datosProyecto, null, 2);
+    const blob = new Blob([json], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+
+    const fechaStr = new Date().toISOString().split('T')[0];
+    const horaStr = new Date().toISOString().split('T')[1].substring(0, 8).replace(/:/g, '-');
+    link.download = `proyecto_cwp_fel3_${fechaStr}_${horaStr}.json`;
+
+    document.body.appendChild(link);
+    link.click();
+
+    // Limpiar después de un pequeño delay
+    setTimeout(() => {
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }, 100);
+
+    const totalCWPs = cwpDefinidos.length || 0;
+    alert('✓ Proyecto descargado correctamente\n\nTotal: ' + totalCWPs + ' CWPs\nDisciplinas: ' + selectedDisciplinas.size + '\nArchivo: proyecto_cwp_fel3_' + fechaStr + '_' + horaStr + '.json');
+  } catch(error) {
+    alert('Error al descargar proyecto: ' + error.message);
+    console.error('Download Error:', error);
+  }
+}
+
+function descargarTodoElProyecto() {
+  descargarProyectoCompleto();
+}
+
+// ===== CARGA DE PROYECTO COMPLETO =====
+function abrirCargaProyecto() {
+  const input = document.getElementById('cargarProyectoInput');
+  if(input) {
+    input.value = ''; // Reset input
+    input.click();
+  }
+}
+
+function cargarProyectoDelArchivo(event) {
+  try {
+    const files = event.target.files;
+    if(!files || files.length === 0) {
+      alert('Por favor selecciona un archivo');
+      return;
+    }
+
+    const file = files[0];
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+      try {
+        const contenido = e.target.result;
+        const datos = JSON.parse(contenido);
+
+        // Validar estructura básica
+        if(!datos.cwps_definidos || !Array.isArray(datos.cwps_definidos)) {
+          alert('Archivo inválido: no contiene los datos esperados');
+          return;
+        }
+
+        if(datos.cwps_definidos.length === 0) {
+          alert('El archivo no contiene CWPs definidos');
+          return;
+        }
+
+        // Restaurar variables de disciplinas y HH
+        hhEstimates = datos.hh_estimates || {};
+        disciplinasPersonalizadas = datos.disciplinas_personalizadas || [];
+        cwpsCodificados = datos.cwps_codificados || {};
+
+        // Restaurar CWPs definidos
+        cwpDefinidos = datos.cwps_definidos || [];
+
+        // Restaurar datos de fichas, fechas, criterios y restricciones
+        fichas = datos.fichas || {};
+        fechas = datos.fechas || {};
+        criteriosPorCWP = datos.criterios_por_cwp || {};
+        criterioGeneral = datos.criterio_general || '';
+        restriccionesPorCWP = datos.restricciones_por_cwp || {};
+        restriccionGeneral = datos.restriccion_general || '';
+        estadoRestricciones = datos.estado_restricciones || {};
+
+        // Actualizar interfaz - esperar a que se complete
+        setTimeout(() => {
+          // Reconstruir disciplinas (grid)
+          const grid = document.getElementById('discipline-grid');
+          if(grid) {
+            let html = '';
+            disciplinas.forEach(d => {
+              html += `<label style="padding:0.5rem;"><input type="checkbox" onchange="toggleDisciplina('${d.id}')" /> <span style="color:${d.color};font-weight:600;">${d.code}</span> ${d.name}</label>`;
+            });
+            grid.innerHTML = html;
+          }
+
+          // Mostrar disciplinas personalizadas
+          const persContainer = document.getElementById('disciplinas-personalizadas');
+          if(persContainer && disciplinasPersonalizadas.length > 0) {
+            let html = '<h4 style="margin-top:1rem;margin-bottom:0.5rem;">Disciplinas Personalizadas Agregadas:</h4><div style="display:flex;flex-wrap:wrap;gap:0.5rem;">';
+            disciplinasPersonalizadas.forEach((d, idx) => {
+              html += `<span style="background:${d.color};color:white;padding:0.35rem 0.75rem;border-radius:4px;font-weight:600;">${d.code} ${d.name} <button onclick="eliminarDisciplinaPersonalizada(${idx})" style="background:none;border:none;color:white;cursor:pointer;font-weight:bold;margin-left:0.5rem;">✕</button></span>`;
+            });
+            html += '</div>';
+            persContainer.innerHTML = html;
+          }
+
+          // Actualizar listas y tablas
+          updateCWPList();
+          renderCriteriosTable();
+          renderRestriccionesTable();
+          initPlanificacionTab();
+          cargarFicha();
+
+          showTab('definir');
+          alert('✓ Proyecto cargado correctamente\n\nTotal: ' + cwpDefinidos.length + ' CWPs restaurados\nDisciplinas personalizadas: ' + disciplinasPersonalizadas.length);
+        }, 100);
+
+      } catch(parseError) {
+        alert('Error al procesar el archivo JSON: ' + parseError.message);
+        console.error('JSON Parse Error:', parseError);
+      }
+    };
+
+    reader.onerror = function(error) {
+      alert('Error al leer el archivo: ' + error.name);
+      console.error('File Read Error:', error);
+    };
+
+    reader.readAsText(file);
+
+  } catch(error) {
+    alert('Error inesperado: ' + error.message);
+    console.error('Unexpected Error:', error);
+  }
+}
+
+// ===== RESUMEN Y RESULTADOS =====
+function actualizarResumen() {
+  // Actualizar vista previa del documento
+  generarVistaPreviaDocumento();
+}
+
+// ===== EXPORT PDF =====
+function exportarPDF() {
+  try {
+    const html = generarContenidoPDF();
+    const newWin = window.open('', '_blank', 'width=1000,height=800');
+    if(!newWin) {
+      alert('⚠️ Por favor, permite que se abran ventanas emergentes (popups)');
+      return;
+    }
+    newWin.document.open();
+    newWin.document.write(html);
+    newWin.document.close();
+
+    setTimeout(() => {
+      if(newWin && !newWin.closed) {
+        newWin.focus();
+        newWin.print();
+      }
+    }, 500);
+  } catch(error) {
+    console.error('Error al exportar PDF:', error);
+    alert('Error al generar el PDF. Revisa la consola para más detalles.');
+  }
+}
+
+function generarHTMLPDF() {
+  // Calcular HH asignadas desde fichas (no desde antecedentes)
+  const totalHHAsignadas = cwpDefinidos.reduce((sum, cwp) => {
+    const ficha = fichas[cwp.id];
+    // Only add if ficha exists AND has a non-empty HH value
+    return sum + ((ficha && ficha.hh) ? (parseInt(ficha.hh, 10) || 0) : 0);
+  }, 0);
+
+  const fechasArray = cwpDefinidos.map(c => ({
+    cwp: c.code,
+    inicio: fechas[c.id]?.inicio,
+    termino: fechas[c.id]?.termino
+  })).filter(f => f.inicio && f.termino);
+
+  const minFecha = fechasArray.length > 0 ? new Date(Math.min(...fechasArray.map(f => new Date(f.inicio)))) : null;
+  const maxFecha = fechasArray.length > 0 ? new Date(Math.max(...fechasArray.map(f => new Date(f.termino)))) : null;
+
+  let fichasHtml = '';
+  cwpDefinidos.forEach((cwp, idx) => {
+    const f = fichas[cwp.id] || {};
+    const discObj = disciplinas.find(d => d.id === cwp.disciplina);
+
+    // Obtener fechas
+    const fechaInicio = f.inicio || fechas[cwp.id]?.inicio || '';
+    const fechaTermino = f.termino || fechas[cwp.id]?.termino || '';
+
+    // Obtener criterios y restricciones
+    const criterio = criteriosPorCWP[cwp.id] || 'Sin definir';
+    const restriccionesArray = restriccionesPorCWP[cwp.id] || [];
+    const restriccionesText = Array.isArray(restriccionesArray) && restriccionesArray.length > 0
+      ? restriccionesArray.map((r, idx) => `${idx + 1}. ${r.texto}`).join('<br>')
+      : 'Sin definir';
+
+    fichasHtml += `<div style="page-break-before:${idx>0?'always':'avoid'};padding:15px 0;">
+      <h2 style="color:#d32f2f;text-align:center;margin:20px 0 15px;font-size:16pt;">FICHA CWP: ${cwp.code}</h2>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:15px;">
+        <tr>
+          <td style="padding:8px;border:1px solid #999;font-weight:700;background:#e8e8e8;width:25%;">Código</td>
+          <td style="padding:8px;border:1px solid #999;">${f.codigo || cwp.code}</td>
+          <td style="padding:8px;border:1px solid #999;font-weight:700;background:#e8e8e8;width:25%;">Disciplina</td>
+          <td style="padding:8px;border:1px solid #999;">${discObj?.name || cwp.name}</td>
+        </tr>
+        <tr>
+          <td style="padding:8px;border:1px solid #999;font-weight:700;background:#e8e8e8;">Inicio</td>
+          <td style="padding:8px;border:1px solid #999;">${fechaInicio ? convertYYYYMMDDtoDDMMYYYY(fechaInicio) : '--'}</td>
+          <td style="padding:8px;border:1px solid #999;font-weight:700;background:#e8e8e8;">Término</td>
+          <td style="padding:8px;border:1px solid #999;">${fechaTermino ? convertYYYYMMDDtoDDMMYYYY(fechaTermino) : '--'}</td>
+        </tr>
+        <tr>
+          <td style="padding:8px;border:1px solid #999;font-weight:700;background:#e8e8e8;">Horas Hombre (HH)</td>
+          <td style="padding:8px;border:1px solid #999;color:#5a9a68;font-weight:bold;">${(f.hh !== undefined && f.hh !== null ? f.hh : (cwp.hh !== undefined && cwp.hh !== null ? cwp.hh : 0)).toLocaleString('es-ES')} HH</td>
+          <td style="padding:8px;border:1px solid #999;font-weight:700;background:#e8e8e8;">Duración (Semanas)</td>
+          <td style="padding:8px;border:1px solid #999;">${(() => {
+            if(fechaInicio && fechaTermino) {
+              const f1 = fechaInicio.split('-');
+              const f2 = fechaTermino.split('-');
+              const d1 = new Date(parseInt(f1[0]), parseInt(f1[1])-1, parseInt(f1[2]));
+              const d2 = new Date(parseInt(f2[0]), parseInt(f2[1])-1, parseInt(f2[2]));
+              const days = Math.floor((d2 - d1) / (1000*60*60*24));
+              const weeks = Math.ceil(days / 7);
+              return weeks + ' semanas';
+            }
+            return '--';
+          })()}</td>
+        </tr>
+        <tr>
+          <td colspan="4" style="padding:8px;border:1px solid #999;font-weight:700;background:#e8e8e8;">Descripción / Alcance</td>
+        </tr>
+        <tr>
+          <td colspan="4" style="padding:8px;border:1px solid #999;">${(f.desc || 'Sin definir').replace(/\n/g, '<br>')}</td>
+        </tr>
+        ${f.antecedentes ? `
+        <tr>
+          <td colspan="4" style="padding:8px;border:1px solid #999;font-weight:700;background:#e8e8e8;">Antecedentes Adicionales</td>
+        </tr>
+        <tr>
+          <td colspan="4" style="padding:8px;border:1px solid #999;">${f.antecedentes.replace(/\n/g, '<br>')}</td>
+        </tr>
+        ` : ''}
+      </table>
+      <div style="margin-bottom:15px;text-align:center;">
+        <h4 style="margin-bottom:10px;font-size:11pt;">Visualización del CWP</h4>
+        <div style="min-height:120px;display:flex;align-items:center;justify-content:center;background:#f9f9f9;border:1px solid #ddd;border-radius:4px;">
+          ${(() => {
+            if(!f.imagen) {
+              return '<svg style="width:50px;height:50px;opacity:0.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
+            }
+            return '<img src="./cwp-images/' + f.imagen + '" alt="CWP Image" style="max-width:100%;max-height:200px;border-radius:4px;">';
+          })()}
+        </div>
+      </div>
+      <div style="margin-bottom:15px;">
+        <h4 style="margin-bottom:10px;font-size:11pt;">Cronograma del CWP</h4>
+        <div style="font-size:0.85rem;overflow-x:auto;background:#f9f9f9;border:1px solid #ddd;border-radius:4px;padding:10px;">
+          ${(() => {
+            function parseDate(dateStr) {
+              if(!dateStr || typeof dateStr !== 'string' || dateStr.length !== 10) return null;
+              const parts = dateStr.split('-');
+              if(parts.length !== 3) return null;
+              const year = parseInt(parts[0], 10);
+              const month = parseInt(parts[1], 10);
+              const day = parseInt(parts[2], 10);
+              return new Date(year, month - 1, day);
+            }
+            const validCWPsAll = [];
+            let minD = null, maxD = null;
+            cwpDefinidos.forEach(c => {
+              const inicio = fechas[c.id]?.inicio;
+              const termino = fechas[c.id]?.termino;
+              if(inicio && termino && inicio.length === 10 && termino.length === 10) {
+                const siDate = parseDate(inicio);
+                const tiDate = parseDate(termino);
+                if(siDate && tiDate && siDate <= tiDate) {
+                  validCWPsAll.push({cwp: c, inicio: siDate, termino: tiDate});
+                  if(!minD || siDate < minD) minD = siDate;
+                  if(!maxD || tiDate > maxD) maxD = tiDate;
+                }
+              }
+            });
+            if(!minD || !maxD || validCWPsAll.length === 0) {
+              if(fechaInicio && fechaTermino) {
+                const si = parseDate(fechaInicio);
+                const ti = parseDate(fechaTermino);
+                if(si && ti) { minD = si; maxD = ti; }
+                else return '<p style="color:#999;text-align:center;padding:10px;">⏱️ Fechas inválidas</p>';
+              } else {
+                return '<p style="color:#999;text-align:center;padding:10px;">📅 Ingresa fechas para ver el cronograma</p>';
+              }
+            }
+            minD = new Date(minD);
+            maxD = new Date(maxD);
+            const daysDiff = Math.floor((maxD - minD) / (1000*60*60*24));
+            const totalWeeks = Math.ceil(daysDiff / 7) + 1;
+            let ganttHtml = '<table style="border-collapse:collapse;width:100%;font-size:0.75rem;"><tr>';
+            ganttHtml += '<th style="background:#3a3a3a;color:white;padding:6px;border:1px solid #666;text-align:left;min-width:80px;">CWP</th>';
+            for(let w = 0; w < totalWeeks; w++) {
+              const weekDate = new Date(minD);
+              weekDate.setDate(weekDate.getDate() + (w * 7));
+              const dayNum = ('0' + weekDate.getDate()).slice(-2);
+              const monthShort = weekDate.toLocaleDateString('es-ES', {month:'short'}).substring(0,3);
+              ganttHtml += '<th style="background:#3a3a3a;color:white;padding:4px;border:1px solid #666;width:30px;text-align:center;font-size:0.65rem;">' + dayNum + '/' + monthShort + '</th>';
+            }
+            ganttHtml += '</tr>';
+            cwpDefinidos.forEach(c => {
+              const cwpData = validCWPsAll.find(v => v.cwp.id === c.id);
+              const isCurrentCWP = c.id === cwp.id;
+              ganttHtml += '<tr style="background:' + (isCurrentCWP ? '#fef3e8' : '#f5f5f5') + '">';
+              ganttHtml += '<td style="padding:6px;border:1px solid #ddd;font-weight:bold;color:' + (isCurrentCWP ? c.color : '#999') + ';text-align:left;">' + c.code + '</td>';
+              if(cwpData) {
+                const {inicio, termino} = cwpData;
+                for(let w = 0; w < totalWeeks; w++) {
+                  const weekStart = new Date(minD);
+                  weekStart.setDate(weekStart.getDate() + (w * 7));
+                  const weekEnd = new Date(weekStart);
+                  weekEnd.setDate(weekEnd.getDate() + 6);
+                  const isActive = (inicio <= weekEnd && termino >= weekStart);
+                  let tdStyle = 'border:1px solid #e0e0e0;height:25px;';
+                  if(isActive) {
+                    if(isCurrentCWP) {
+                      tdStyle = 'background:' + c.color + ';border:2px solid ' + c.color + ';height:25px;box-shadow:inset 0 0 8px rgba(0,0,0,0.3);';
+                    } else {
+                      tdStyle = 'background:#d3d3d3;opacity:0.5;border:1px solid #999;height:25px;';
+                    }
+                  }
+                  ganttHtml += '<td style="' + tdStyle + '"></td>';
+                }
+              } else {
+                for(let w = 0; w < totalWeeks; w++) ganttHtml += '<td style="background:transparent;border:1px solid #e0e0e0;height:25px;"></td>';
+              }
+              ganttHtml += '</tr>';
+            });
+            ganttHtml += '</table>';
+            return ganttHtml;
+          })()}
+        </div>
+        <p style="font-size:0.75rem;color:#666;margin-top:8px;"><strong>📌 Destacado:</strong> ${cwp.code} aparece con fondo resaltado</p>
+      </div>
+      ${criterio ? `
+      <div style="margin-bottom:12px;">
+        <strong style="display:block;margin-bottom:5px;">Criterios de Quiebre:</strong>
+        <div style="padding:10px;background:#f5f5f5;border:1px solid #ddd;min-height:40px;">${criterio}</div>
+      </div>
+      ` : ''}
+      ${(() => {
+        const restricciones = restriccionesPorCWP[cwp.id] || [];
+        if(restricciones.length === 0) return '';
+        return `
+      <div style="margin-bottom:12px;">
+        <strong style="display:block;margin-bottom:5px;">Restricciones y Estado:</strong>
+        <table style="width:100%;border-collapse:collapse;font-size:0.9rem;margin-top:0.5rem;">
+          <tr style="background:#e8e8e8;">
+            <th style="padding:8px;border:1px solid #ddd;text-align:left;">#</th>
+            <th style="padding:8px;border:1px solid #ddd;text-align:left;">Restricción</th>
+            <th style="padding:8px;border:1px solid #ddd;text-align:center;width:140px;">Estado</th>
+            <th style="padding:8px;border:1px solid #ddd;text-align:left;width:120px;">Responsable</th>
+          </tr>
+          ${restricciones.map((r, idx) => {
+            const estados = estadoRestricciones[cwp.id] || [];
+            const est = estados[idx] || {};
+            const estadoLabel = est.estado === 'liberada' ? '✓ Liberada' : est.estado === 'siguiente' ? '→ FEL Post.' : '--';
+            const estadoColor = est.estado === 'liberada' ? '#5a9a68' : est.estado === 'siguiente' ? '#e87c1e' : '#999';
+            return `<tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold;text-align:center;">${idx + 1}</td><td style="padding:8px;border:1px solid #ddd;">${r.texto}</td><td style="padding:8px;border:1px solid #ddd;text-align:center;color:${estadoColor};font-weight:bold;">${estadoLabel}</td><td style="padding:8px;border:1px solid #ddd;">${est.responsable || '--'}</td></tr>`;
+          }).join('')}
+        </table>
+      </div>
+        `;
+      })()}
+      ${f.fel ? `
+      <div>
+        <strong style="display:block;margin-bottom:5px;">Consideraciones FEL Siguiente:</strong>
+        <div style="padding:10px;background:#f5f5f5;border:1px solid #ddd;min-height:40px;">${f.fel.replace(/\n/g, '<br>')}</div>
+      </div>
+      ` : ''}
+    </div>`;
+  });
+
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Taller CWP - Fichas</title><style>
+*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important;box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',Tahoma,sans-serif;color:#2d3748;font-size:10pt;padding:16px;max-width:820px;margin:0 auto;}
+h2{font-size:14pt;color:#3a3a3a;margin:12px 0 8px;}
+table{width:100%;border-collapse:collapse;margin:8px 0;}
+th{background:#3a3a3a;color:white;padding:5px;font-size:8pt;}
+td{padding:4px;border:1px solid #d0d0d0;font-size:9pt;}
+.no-print{display:none!important;}
+  </style></head><body>
+<div style="text-align:center;padding:40px 20px;border-bottom:3px solid #e87c1e;margin-bottom:16px;">
+  <h1 style="font-size:20pt;color:#3a3a3a;">Taller Módulo 3 - CWP</h1>
+  <h2 style="font-size:12pt;color:#e87c1e;font-weight:400;">FEL 3: Quiebre a Nivel de Paquete</h2>
+  <p style="font-size:10pt;color:#4a5568;margin-top:8px;">Planta de Reactivos - CWA-05</p>
+  <p style="font-size:9pt;color:#718096;margin-top:10px;">Fecha: ${new Date().toLocaleDateString('es-CL')}</p>
+</div>
+<div style="margin-bottom:16px;">
+  <h3 style="font-size:12pt;color:#3a3a3a;margin-bottom:8px;">Resumen General</h3>
+  <table>
+    <tr><td><strong>CWP Definidos</strong></td><td>${cwpDefinidos.length}</td></tr>
+    <tr><td><strong>Total HH Asignadas a CWP</strong></td><td>${totalHHAsignadas.toLocaleString()}</td></tr>
+    <tr><td><strong>Diferencia HH (CWA-05: 184,050)</strong></td><td>${(184050 - totalHHAsignadas).toLocaleString()}</td></tr>
+    <tr><td><strong>Restricciones Liberadas</strong></td><td>${(() => {
+      let count = 0;
+      Object.values(estadoRestricciones).forEach(cwpRestricciones => {
+        if(Array.isArray(cwpRestricciones)) {
+          cwpRestricciones.forEach(r => {
+            if(r && r.estado === 'liberada') count++;
+          });
+        }
+      });
+      return count;
+    })()}</td></tr>
+    <tr><td><strong>Restricciones que Pasan a Ingeniería</strong></td><td>${(() => {
+      let count = 0;
+      Object.values(estadoRestricciones).forEach(cwpRestricciones => {
+        if(Array.isArray(cwpRestricciones)) {
+          cwpRestricciones.forEach(r => {
+            if(r && r.estado === 'siguiente') count++;
+          });
+        }
+      });
+      return count;
+    })()}</td></tr>
+    <tr><td><strong>Fichas Completadas</strong></td><td>${(() => {
+      let count = 0;
+      Object.values(fichas).forEach(ficha => {
+        if(ficha && ficha.codigo && ficha.desc && ficha.inicio && ficha.termino && ficha.hh) {
+          count++;
+        }
+      });
+      return count;
+    })()}</td></tr>
+  </table>
+</div>
+${criterioGeneral ? `
+<div style="margin-bottom:16px;">
+  <h3 style="font-size:12pt;color:#3a3a3a;margin-bottom:8px;">Criterios Generales de Quiebre</h3>
+  <div style="padding:15px;background:#f9f9f9;border:1px solid #ddd;border-left:4px solid #e87c1e;line-height:1.6;">
+    ${criterioGeneral.replace(/\n/g, '<br>')}
+  </div>
+</div>
+` : ''}
+${restriccionGeneral ? `
+<div style="margin-bottom:16px;">
+  <h3 style="font-size:12pt;color:#3a3a3a;margin-bottom:8px;">Restricciones Generales</h3>
+  <div style="padding:15px;background:#f9f9f9;border:1px solid #ddd;border-left:4px solid #e87c1e;line-height:1.6;">
+    ${restriccionGeneral.replace(/\n/g, '<br>')}
+  </div>
+</div>
+` : ''}
+${fichasHtml}
+<div style="text-align:center;margin-top:30px;padding:15px;">
+  <button class="print-btn" onclick="imprimirPDF()">📄 Imprimir / Guardar como PDF</button>
+</div>
+  </body></html>`;
+}
+
+// ===== MINI GANTT PARA FICHA CWP =====
+function generarMiniGanttFicha(cwpId) {
+  const container = document.getElementById('ficha-gantt-container');
+  if(!container) {
+    console.error('Contenedor ficha-gantt-container no encontrado');
+    return;
+  }
+
+  const cwpActual = cwpDefinidos.find(c => c.id === cwpId);
+
+  if (!cwpActual) {
+    container.innerHTML = '<p style="color:var(--muted);text-align:center;padding:1rem;">CWP no encontrado</p>';
+    return;
+  }
+
+  // Helper: Parse date in YYYY-MM-DD format
+  function parseDate(dateStr) {
+    if(!dateStr || typeof dateStr !== 'string') return null;
+    const parts = dateStr.trim().split('-');
+    if(parts.length !== 3) return null;
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10);
+    const day = parseInt(parts[2], 10);
+    return new Date(year, month - 1, day);
+  }
+
+  // Collect all valid date pairs
+  const validCWPs = [];
+  let minDate = null;
+  let maxDate = null;
+
+  cwpDefinidos.forEach(cwp => {
+    const inicio = fechas[cwp.id]?.inicio;
+    const termino = fechas[cwp.id]?.termino;
+
+    if(inicio && termino && inicio.length === 10 && termino.length === 10) {
+      const siDate = parseDate(inicio);
+      const tiDate = parseDate(termino);
+
+      if(siDate && tiDate && siDate <= tiDate) {
+        validCWPs.push({cwp, inicio: siDate, termino: tiDate});
+        if(!minDate || siDate < minDate) minDate = siDate;
+        if(!maxDate || tiDate > maxDate) maxDate = tiDate;
+      }
+    }
+  });
+
+  if(!minDate || !maxDate || validCWPs.length === 0) {
+    const fechasObj = fechas[cwpId];
+    if (fechasObj && fechasObj.inicio && fechasObj.termino) {
+      const inicio = parseDate(fechasObj.inicio);
+      const termino = parseDate(fechasObj.termino);
+      if(inicio && termino) {
+        minDate = inicio;
+        maxDate = termino;
+      } else {
+        const hhInfo = cwpActual.hh ? `<br><strong>Horas Hombre (HH):</strong> ${cwpActual.hh}` : '';
+        container.innerHTML = `<div style="color:var(--muted);text-align:center;padding:1rem;background:#f7fafc;border-radius:6px;"><p>⏱️ Las fechas ingresadas no son válidas (formato YYYY-MM-DD)</p><p style="font-size:0.85rem;margin-top:0.5rem;">Verifica que el formato sea correcto: YYYY-MM-DD${hhInfo}</p></div>`;
+        return;
+      }
+    } else {
+      const hhInfo = cwpActual.hh ? `<br><strong>Horas Hombre (HH):</strong> ${cwpActual.hh}` : '';
+      container.innerHTML = `<div style="color:var(--muted);text-align:center;padding:1rem;background:#f7fafc;border-radius:6px;"><p>📅 <strong>${cwpActual.code}</strong></p><p>⏱️ Ingresa fechas de inicio y término en la sección Planificación para ver el cronograma${hhInfo}</p></div>`;
+      return;
+    }
+  }
+
+  // Asegurar rango correcto
+  minDate = new Date(minDate);
+  maxDate = new Date(maxDate);
+
+  const daysDiff = Math.floor((maxDate - minDate) / (1000*60*60*24));
+  const totalWeeks = Math.ceil(daysDiff / 7) + 1;
+
+  // Generar tabla
+  let html = '<div style="font-size:0.75rem;overflow-x:auto;margin-top:0.5rem;"><table style="border-collapse:collapse;width:100%;"><tr>';
+  html += '<th style="background:var(--primary);color:white;padding:0.5rem;min-width:90px;text-align:left;position:sticky;left:0;z-index:10;border:1px solid #666;font-size:0.8rem;">CWP</th>';
+
+  // Encabezados de semanas
+  for(let w = 0; w < totalWeeks; w++) {
+    const weekDate = new Date(minDate);
+    weekDate.setDate(weekDate.getDate() + (w * 7));
+    const dayNum = ('0' + weekDate.getDate()).slice(-2);
+    const monthShort = weekDate.toLocaleDateString('es-ES', {month:'short'}).substring(0,3);
+    html += `<th style="background:var(--primary);color:white;padding:0.25rem;width:35px;border:1px solid #666;text-align:center;font-size:0.65rem;font-weight:700;">${dayNum}/${monthShort}</th>`;
+  }
+  html += '</tr>';
+
+  // Filas de CWPs
+  cwpDefinidos.forEach(cwp => {
+    const cwpData = validCWPs.find(v => v.cwp.id === cwp.id);
+    const isCurrentCWP = cwp.id === cwpId;
+
+    // Resaltar fila actual (solo CWP actual en color, resto en gris)
+    const rowBgStyle = isCurrentCWP ? 'background:#fef3e8;' : 'background:#f5f5f5;';
+    html += `<tr style="${rowBgStyle}">`;
+
+    // Código del CWP: color para actual, gris para otros
+    const cellBgStyle = isCurrentCWP ? `background:${cwp.color};color:white;font-weight:700;` : `color:#999;font-weight:700;`;
+    html += `<td style="padding:0.5rem;min-width:90px;text-align:left;position:sticky;left:0;z-index:5;border:1px solid #ddd;${cellBgStyle}">${cwp.code}</td>`;
+
+    if(cwpData) {
+      const {inicio, termino} = cwpData;
+      const daysDuration = Math.floor((termino - inicio) / (1000*60*60*24));
+      const semanas = Math.max(1, Math.ceil(daysDuration / 7));
+
+      for(let w = 0; w < totalWeeks; w++) {
+        const weekStartDate = new Date(minDate);
+        weekStartDate.setDate(weekStartDate.getDate() + (w * 7));
+        const weekEndDate = new Date(weekStartDate);
+        weekEndDate.setDate(weekEndDate.getDate() + 6);
+
+        const cwpActive = (inicio <= weekEndDate && termino >= weekStartDate);
+
+        let tdStyle = 'border:1px solid #e0e0e0;height:35px;';
+        if(cwpActive) {
+          if(isCurrentCWP) {
+            // CWP actual: color con destaque
+            tdStyle = `background:${cwp.color};border:2px solid ${cwp.color};height:35px;box-shadow:inset 0 0 8px rgba(0,0,0,0.3);`;
+          } else {
+            // Otros CWPs: gris
+            tdStyle = `background:#d3d3d3;opacity:0.5;border:1px solid #999;height:35px;`;
+          }
+        }
+        html += `<td style="${tdStyle}"></td>`;
+      }
+    } else {
+      for(let w = 0; w < totalWeeks; w++) {
+        html += `<td style="background:transparent;border:1px solid #e0e0e0;height:35px;"></td>`;
+      }
+    }
+    html += '</tr>';
+  });
+
+  html += '</table></div>';
+
+  // Información del CWP actual
+  let infoHtml = '<div style="margin-top:1rem;padding:0.75rem;background:#f7fafc;border-radius:6px;font-size:0.85rem;border-left:4px solid ' + cwpActual.color + ';">';
+  infoHtml += '<p style="margin:0;margin-bottom:0.5rem;"><strong>📌 ' + cwpActual.code + '</strong></p>';
+  if(cwpActual.hh) {
+    infoHtml += '<p style="margin:0;color:var(--success);"><strong>Horas Hombre (HH):</strong> ' + cwpActual.hh.toLocaleString() + ' HH</p>';
+  }
+  infoHtml += '<p style="margin:0.5rem 0 0 0;color:var(--muted);font-size:0.75rem;">El CWP actual aparece destacado con fondo de color en el cronograma</p>';
+  infoHtml += '</div>';
+
+  container.innerHTML = html + infoHtml;
+}
+
+// ===== CARGAR PROYECTO DESDE ARCHIVO =====
+function abrirCargaProyectoArchivo() {
+  const input = document.getElementById('cargarProyectoInput');
+  if(input) {
+    input.value = '';
+    input.click();
+  }
+}
+
+function cargarProyectoDelArchivo(event) {
+  const file = event.target.files[0];
+  if(!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const datos = JSON.parse(e.target.result);
+
+      // Validar estructura
+      if(!datos.cwps_definidos || !Array.isArray(datos.cwps_definidos)) {
+        alert('Formato JSON inválido. Asegúrate de haber seleccionado el archivo correcto.');
+        return;
+      }
+
+      // Restaurar selectedDisciplinas si existe en JSON
+      if(datos.selected_disciplinas && Array.isArray(datos.selected_disciplinas)) {
+        selectedDisciplinas = new Set(datos.selected_disciplinas);
+      } else {
+        // Fallback: reconstruir desde cwpDefinidos si el JSON no tiene selected_disciplinas
+        selectedDisciplinas = new Set();
+        (datos.cwps_definidos || []).forEach(cwp => {
+          const parts = cwp.id.split('_');
+          if(parts.length > 0) {
+            const disciplinaId = parts[0];
+            if(disciplinaId) selectedDisciplinas.add(disciplinaId);
+          }
+        });
+      }
+
+      // Restaurar variables
+      hhEstimates = datos.hh_estimates || {};
+      disciplinasPersonalizadas = datos.disciplinas_personalizadas || [];
+      cwpsCodificados = datos.cwps_codificados || {};
+      cwpDefinidos = datos.cwps_definidos || [];
+      fichas = datos.fichas || {};
+      fechas = datos.fechas || {};
+      criteriosPorCWP = datos.criterios_por_cwp || {};
+      criterioGeneral = datos.criterio_general || '';
+      restriccionesPorCWP = datos.restricciones_por_cwp || {};
+      restriccionGeneral = datos.restriccion_general || '';
+      estadoRestricciones = datos.estado_restricciones || {};
+
+      // Actualizar interfaz
+      setTimeout(() => {
+        const grid = document.getElementById('discipline-grid');
+        if(grid) {
+          let html = '';
+          disciplinas.forEach(d => {
+            const isSelected = selectedDisciplinas.has(d.id);
+            html += `<label style="padding:0.5rem;"><input type="checkbox" onchange="toggleDisciplina('${d.id}')" ${isSelected ? 'checked' : ''} /> <span style="color:${d.color};font-weight:600;">${d.code}</span> ${d.name}</label>`;
+          });
+          grid.innerHTML = html;
+        }
+
+        // Mostrar disciplinas personalizadas
+        const persContainer = document.getElementById('disciplinas-personalizadas');
+        if(persContainer) {
+          if(disciplinasPersonalizadas.length > 0) {
+            let html = '<h4 style="margin-top:1rem;margin-bottom:0.5rem;">Disciplinas Personalizadas Agregadas:</h4><div style="display:flex;flex-wrap:wrap;gap:0.5rem;">';
+            disciplinasPersonalizadas.forEach((d, idx) => {
+              html += `<span style="background:${d.color};color:white;padding:0.35rem 0.75rem;border-radius:4px;font-weight:600;">${d.code} ${d.name}</span>`;
+            });
+            html += '</div>';
+            persContainer.innerHTML = html;
+          } else {
+            persContainer.innerHTML = '';
+          }
+        }
+
+        // Mostrar CWPs restaurados
+        const list = document.getElementById('cwp-list');
+        if(list) {
+          list.innerHTML = '';
+          cwpDefinidos.forEach(cwp => {
+            const tag = document.createElement('div');
+            tag.className = 'cwp-tag';
+            tag.style.background = cwp.color;
+            tag.innerHTML = `${cwp.code}: ${cwp.name}`;
+            list.appendChild(tag);
+          });
+        }
+
+        // Actualizar total HH
+        const total = cwpDefinidos.reduce((s, c) => s + (c.hh || 0), 0);
+        const totalEl = document.getElementById('cwp-total');
+        if(totalEl) {
+          totalEl.textContent = `Total: ${total.toLocaleString()} HH de 184,050 HH`;
+        }
+
+        // Actualizar otras tablas
+        try {
+          renderCriteriosTable();
+          renderRestriccionesTable();
+          initPlanificacionTab();
+          generarVistaPreviaDocumento();
+        } catch(e) {
+          console.error('Error actualizando tablas:', e);
+        }
+
+        // Mostrar confirmación
+        showTab('definir');
+        alert('✓ Proyecto cargado correctamente\n\nTotal: ' + cwpDefinidos.length + ' CWPs restaurados\nDisciplinas: ' + selectedDisciplinas.size);
+      }, 100);
+
+    } catch(error) {
+      alert('Error al cargar el archivo: ' + error.message + '\n\nAsegúrate de haber seleccionado un archivo JSON válido.');
+      console.error('Error:', error);
+    }
+  };
+
+  reader.readAsText(file);
+
+  // Reset input para permitir cargar el mismo archivo nuevamente
+  event.target.value = '';
+}
+
+// ===== IMPRESIÓN EN PDF =====
+function imprimirPDF() {
+  // Esperar un poco para asegurar que el DOM esté actualizado
+  setTimeout(function() {
+    // Abrir diálogo de impresión del navegador
+    window.print();
+  }, 100);
+}
+
+// ===== IMPRIMIR SOLO FICHA ACTUAL =====
+function imprimirFichaActual() {
+  const cwpId = document.getElementById('cwp-selector')?.value;
+  if(!cwpId) {
+    alert('Selecciona un CWP para imprimir');
+    return;
+  }
+
+  const cwp = cwpDefinidos.find(c => c.id === cwpId);
+  const ficha = fichas[cwpId];
+
+  // Crear contenido para impresión
+  let html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Ficha ${cwp.code}</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; color: #2b2b2b; }
+    h1, h2, h3 { color: #3a3a3a; }
+    .header { background: #2b2b2b; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+    .section { margin: 20px 0; page-break-inside: avoid; }
+    .info-row { display: flex; margin: 10px 0; }
+    .info-label { font-weight: bold; width: 30%; }
+    .info-value { width: 70%; }
+    table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+    th { background: #3a3a3a; color: white; padding: 10px; text-align: left; }
+    td { border: 1px solid #ddd; padding: 10px; }
+    .gantt { margin: 20px 0; overflow-x: auto; }
+    @media print {
+      body { margin: 0; }
+      page { margin: 1cm; }
+      .section { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>${cwp.code} - ${cwp.name}</h1>
+    <p>Ficha de Paquete de Trabajo</p>
+  </div>
+
+  <div class="section">
+    <h2>Información General</h2>
+    <div class="info-row">
+      <div class="info-label">Código:</div>
+      <div class="info-value">${cwp.code}</div>
+    </div>
+    <div class="info-row">
+      <div class="info-label">Disciplina:</div>
+      <div class="info-value">${cwp.name}</div>
+    </div>
+    <div class="info-row">
+      <div class="info-label">HH Estimadas:</div>
+      <div class="info-value">${cwp.hh ? cwp.hh.toLocaleString('es-ES') : '0'} HH</div>
+    </div>
+  </div>
+
+  ${ficha ? `
+  <div class="section">
+    <h2>Detalles de la Ficha</h2>
+    <div class="info-row">
+      <div class="info-label">Descripción:</div>
+      <div class="info-value">${ficha.desc || 'Sin descripción'}</div>
+    </div>
+    <div class="info-row">
+      <div class="info-label">Antecedentes:</div>
+      <div class="info-value">${ficha.antecedentes || 'Sin antecedentes'}</div>
+    </div>
+    <div class="info-row">
+      <div class="info-label">HH Asignadas:</div>
+      <div class="info-value">${ficha.hh || '0'} HH</div>
+    </div>
+    <div class="info-row">
+      <div class="info-label">Fecha Inicio:</div>
+      <div class="info-value">${ficha.inicio || 'No especificada'}</div>
+    </div>
+    <div class="info-row">
+      <div class="info-label">Fecha Término:</div>
+      <div class="info-value">${ficha.termino || 'No especificada'}</div>
+    </div>
+    <div class="info-row">
+      <div class="info-label">Consideraciones FEL Siguiente:</div>
+      <div class="info-value">${ficha.fel || 'Sin consideraciones'}</div>
+    </div>
+  </div>
+  ` : ''}
+
+  <div style="text-align: center; margin-top: 40px; color: #999; font-size: 0.9em;">
+    <p>Documento generado: ${new Date().toLocaleDateString('es-ES')} ${new Date().toLocaleTimeString('es-ES')}</p>
+  </div>
+</body>
+</html>`;
+
+  // Abrir en nueva ventana
+  const printWindow = window.open('', '', 'height=600,width=800');
+  printWindow.document.write(html);
+  printWindow.document.close();
+
+  // Esperar a que cargue y luego imprimir
+  setTimeout(function() {
+    printWindow.focus();
+    printWindow.print();
+  }, 500);
+}
+
+// ===== GRÁFICO COMPARATIVO DE HH =====
+// ===== VISUALIZADOR DE INFORME =====
+function actualizarVisualizadorInforme() {
+  const container = document.getElementById('informe-preview');
+
+  let html = `<h1 style="text-align:center;color:#2b2b2b;margin-bottom:0.5rem;border-bottom:2px solid #3a3a3a;padding-bottom:1rem;">DESGLOSE DE PAQUETES DE TRABAJO (CWP)</h1>
+<p style="text-align:center;color:#666;margin-bottom:2rem;font-size:0.9rem;">Proyecto: Reactivos Plant CWA-05 | Nivel: FEL3 | Total HH: 184,050</p>`;
+
+  // Antecedentes
+  html += `<h2 style="color:#3a3a3a;border-bottom:1px solid #ddd;padding-bottom:0.5rem;margin-top:2rem;margin-bottom:1rem;">ANTECEDENTES</h2>`;
+  html += `<table style="width:100%;border-collapse:collapse;margin-bottom:1.5rem;">
+    <tr style="background:#f7fafc;border-bottom:1px solid #ddd;">
+      <td style="padding:0.75rem;font-weight:bold;">HH Propuestas (Experto):</td>
+      <td style="padding:0.75rem;">${hhExperto.c ? hhExperto.c.hh.toLocaleString('es-ES') : '80,050'} HH</td>
+    </tr>
+    <tr style="border-bottom:1px solid #ddd;">
+      <td style="padding:0.75rem;font-weight:bold;">HH Asignadas (FEL3):</td>
+      <td style="padding:0.75rem;" id="informe-hh-asignadas">0 HH</td>
+    </tr>
+    <tr style="background:#f7fafc;border-bottom:1px solid #ddd;">
+      <td style="padding:0.75rem;font-weight:bold;">Variación HH:</td>
+      <td style="padding:0.75rem;" id="informe-variacion-hh">0 HH (0%)</td>
+    </tr>
+  </table>`;
+
+  // Resumen de CWPs por disciplina
+  html += `<h2 style="color:#3a3a3a;border-bottom:1px solid #ddd;padding-bottom:0.5rem;margin-top:2rem;margin-bottom:1rem;">PAQUETES DE TRABAJO POR DISCIPLINA</h2>`;
+
+  const disciplinasCWP = {};
+  cwpDefinidos.forEach(cwp => {
+    const disc = disciplinas.find(d => d.id === cwp.disciplina);
+    if (disc) {
+      if (!disciplinasCWP[disc.code]) disciplinasCWP[disc.code] = [];
+      disciplinasCWP[disc.code].push(cwp);
+    }
+  });
+
+  Object.keys(disciplinasCWP).sort().forEach(discCode => {
+    const cwpList = disciplinasCWP[discCode];
+    const discName = disciplinas.find(d => d.code === discCode)?.name || discCode;
+
+    html += `<h3 style="color:#555;margin-top:1.5rem;margin-bottom:0.75rem;">${discCode} - ${discName}</h3>`;
+    html += `<table style="width:100%;border-collapse:collapse;margin-bottom:1.5rem;border:1px solid #ddd;">
+      <thead style="background:#3a3a3a;color:white;">
+        <tr>
+          <th style="padding:0.75rem;border:1px solid #ddd;text-align:left;">Código</th>
+          <th style="padding:0.75rem;border:1px solid #ddd;text-align:left;">Descripción</th>
+          <th style="padding:0.75rem;border:1px solid #ddd;text-align:right;">HH Antecedentes</th>
+          <th style="padding:0.75rem;border:1px solid #ddd;text-align:right;">HH Planificadas</th>
+          <th style="padding:0.75rem;border:1px solid #ddd;text-align:right;">Variación</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+    cwpList.forEach(cwp => {
+      const ficha = fichas[cwp.id];
+      const hhAnte = parseInt(cwp.hh) || 0;
+      const hhPlan = ficha ? parseInt(ficha.hh) || 0 : 0;
+      const var_hh = hhPlan - hhAnte;
+      const var_pct = hhAnte > 0 ? ((var_hh / hhAnte) * 100).toFixed(1) : '0';
+      const varColor = var_hh > 0 ? '#c0392b' : var_hh < 0 ? '#5a9a68' : '#666';
+
+      html += `<tr style="border:1px solid #ddd;">
+        <td style="padding:0.75rem;border:1px solid #ddd;font-weight:600;">${cwp.code}</td>
+        <td style="padding:0.75rem;border:1px solid #ddd;">${cwp.descripcion}</td>
+        <td style="padding:0.75rem;border:1px solid #ddd;text-align:right;">${hhAnte.toLocaleString('es-ES')}</td>
+        <td style="padding:0.75rem;border:1px solid #ddd;text-align:right;">${hhPlan.toLocaleString('es-ES')}</td>
+        <td style="padding:0.75rem;border:1px solid #ddd;text-align:right;color:${varColor};font-weight:600;">${var_hh >= 0 ? '+' : ''}${var_hh.toLocaleString('es-ES')} (${var_pct}%)</td>
+      </tr>`;
+    });
+
+    const totalAnte = cwpList.reduce((sum, cwp) => sum + (parseInt(cwp.hh) || 0), 0);
+    const totalPlan = cwpList.reduce((sum, cwp) => {
+      const ficha = fichas[cwp.id];
+      return sum + (ficha ? parseInt(ficha.hh) || 0 : 0);
+    }, 0);
+    const totalVar = totalPlan - totalAnte;
+    const totalVarPct = totalAnte > 0 ? ((totalVar / totalAnte) * 100).toFixed(1) : '0';
+    const totalVarColor = totalVar > 0 ? '#c0392b' : totalVar < 0 ? '#5a9a68' : '#666';
+
+    html += `<tr style="background:#f7fafc;border:1px solid #ddd;font-weight:bold;">
+      <td colspan="2" style="padding:0.75rem;border:1px solid #ddd;">SUBTOTAL ${discCode}</td>
+      <td style="padding:0.75rem;border:1px solid #ddd;text-align:right;">${totalAnte.toLocaleString('es-ES')}</td>
+      <td style="padding:0.75rem;border:1px solid #ddd;text-align:right;">${totalPlan.toLocaleString('es-ES')}</td>
+      <td style="padding:0.75rem;border:1px solid #ddd;text-align:right;color:${totalVarColor};">${totalVar >= 0 ? '+' : ''}${totalVar.toLocaleString('es-ES')} (${totalVarPct}%)</td>
+    </tr></tbody></table>`;
+  });
+
+  // Resumen de restricciones
+  html += `<h2 style="color:#3a3a3a;border-bottom:1px solid #ddd;padding-bottom:0.5rem;margin-top:2rem;margin-bottom:1rem;">RESTRICCIONES IDENTIFICADAS</h2>`;
+
+  let totalRestricciones = 0;
+  Object.values(restriccionesPorCWP).forEach(arr => {
+    if (Array.isArray(arr)) totalRestricciones += arr.length;
+  });
+
+  if (totalRestricciones === 0) {
+    html += `<p style="color:#666;">Sin restricciones registradas.</p>`;
+  } else {
+    html += `<p style="color:#666;margin-bottom:1rem;"><strong>Total de restricciones:</strong> ${totalRestricciones}</p>`;
+
+    Object.keys(restriccionesPorCWP).forEach(cwpId => {
+      const cwp = cwpDefinidos.find(c => c.id === cwpId);
+      const restricciones = restriccionesPorCWP[cwpId];
+      if (!cwp || !Array.isArray(restricciones) || restricciones.length === 0) return;
+
+      html += `<h4 style="color:#555;margin-top:1rem;margin-bottom:0.5rem;">${cwp.code}</h4>`;
+      html += `<ol style="margin-left:1.5rem;margin-bottom:1rem;">`;
+
+      restricciones.forEach((rest, idx) => {
+        html += `<li style="margin-bottom:0.5rem;"><strong>${rest.texto}</strong> <em style="color:#666;">(Responsable: ${rest.responsable || 'Por asignar'})</em></li>`;
+      });
+
+      html += `</ol>`;
+    });
+  }
+
+  // Cronograma
+  html += `<h2 style="color:#3a3a3a;border-bottom:1px solid #ddd;padding-bottom:0.5rem;margin-top:2rem;margin-bottom:1rem;">CRONOGRAMA</h2>`;
+
+  let cronCount = 0;
+  Object.entries(fechas).forEach(([cwpId, f]) => {
+    if (f && f.inicio && f.termino) {
+      const cwp = cwpDefinidos.find(c => c.id === cwpId);
+      if (cwp) {
+        cronCount++;
+        const inicio = new Date(f.inicio);
+        const termino = new Date(f.termino);
+        const duracionDias = (termino - inicio) / (24 * 60 * 60 * 1000);
+        const duracionSemanas = Math.ceil(duracionDias / 7);
+
+        html += `<p style="margin-bottom:0.5rem;"><strong>${cwp.code}</strong>: ${inicio.toLocaleDateString('es-ES')} → ${termino.toLocaleDateString('es-ES')} (${duracionSemanas} semana${duracionSemanas !== 1 ? 's' : ''})</p>`;
+      }
+    }
+  });
+
+  if (cronCount === 0) {
+    html += `<p style="color:#666;">Sin cronograma definido.</p>`;
+  }
+
+  html += `<div style="text-align:center;margin-top:3rem;padding-top:2rem;border-top:2px solid #ddd;color:#666;font-size:0.85rem;">
+    <p>Documento generado automáticamente - FEL3 Workshop CWP</p>
+  </div>`;
+
+  container.innerHTML = html;
+
+  // Actualizar valores de HH
+  let totalHHAnte = 0, totalHHPlan = 0;
+  cwpDefinidos.forEach(cwp => {
+    totalHHAnte += parseInt(cwp.hh) || 0;
+    const ficha = fichas[cwp.id];
+    // Only add if ficha exists AND has an HH value (not empty string)
+    totalHHPlan += (ficha && ficha.hh) ? (parseInt(ficha.hh, 10) || 0) : 0;
+  });
+
+  const variaHH = totalHHPlan - totalHHAnte;
+  const variaHHPct = totalHHAnte > 0 ? ((variaHH / totalHHAnte) * 100).toFixed(1) : '0';
+
+  const hhAsignadasEl = document.getElementById('informe-hh-asignadas');
+  const variacionHHEl = document.getElementById('informe-variacion-hh');
+
+  if (hhAsignadasEl) hhAsignadasEl.textContent = totalHHPlan.toLocaleString('es-ES') + ' HH';
+  if (variacionHHEl) variacionHHEl.textContent = `${variaHH >= 0 ? '+' : ''}${variaHH.toLocaleString('es-ES')} HH (${variaHH >= 0 ? '+' : ''}${variaHHPct}%)`;
+}
+
+// ===== RESULTADOS Y COMPLETITUD =====
+function calcularCompletitud() {
+  const totalCWPs = cwpDefinidos.length;
+  if (totalCWPs === 0) return 0;
+
+  // Contar fichas completadas (tienen descripción)
+  const fichasCompletas = cwpDefinidos.filter(cwp => {
+    const ficha = fichas[cwp.id];
+    return ficha && ficha.desc && ficha.desc.trim().length > 0;
+  }).length;
+
+  // Contar CWPs con fechas
+  const cwpsConFechas = cwpDefinidos.filter(cwp => {
+    const f = fechas[cwp.id];
+    return f && f.inicio && f.termino;
+  }).length;
+
+  // Contar CWPs con restricciones
+  const cwpsConRestricciones = cwpDefinidos.filter(cwp => {
+    const rest = restriccionesPorCWP[cwp.id];
+    return Array.isArray(rest) && rest.some(r => r.texto && r.texto.trim());
+  }).length;
+
+  // Contar CWPs con criterios
+  const cwpsConCriterios = cwpDefinidos.filter(cwp => {
+    const crit = criteriosPorCWP[cwp.id];
+    return crit && crit.trim().length > 0;
+  }).length;
+
+  // Porcentaje: promedio de completitud
+  const itemsPorCWP = 4; // desc, fechas, restricciones, criterios
+  const itemsCompletados = fichasCompletas + cwpsConFechas + cwpsConRestricciones + cwpsConCriterios;
+  const totalItems = totalCWPs * itemsPorCWP;
+
+  return totalItems > 0 ? Math.round((itemsCompletados / totalItems) * 100) : 0;
+}
+
+// ===== VISTA PREVIA DEL DOCUMENTO =====
+function generarVistaPreviaDocumento() {
+  const container = document.getElementById('preview-documento');
+  const html = generarContenidoPDF();
+  container.innerHTML = html;
+}
+
+function generarContenidoPDF() {
+  // Calcular HH asignadas desde fichas (no desde antecedentes)
+  const totalHHAsignadas = cwpDefinidos.reduce((sum, cwp) => {
+    const ficha = fichas[cwp.id];
+    // Only add if ficha exists AND has a non-empty HH value
+    return sum + ((ficha && ficha.hh) ? (parseInt(ficha.hh, 10) || 0) : 0);
+  }, 0);
+
+  // Generar fichas
+  let fichasHtml = '';
+  cwpDefinidos.forEach((cwp, idx) => {
+    const f = fichas[cwp.id] || {};
+    const discObj = disciplinas.find(d => d.id === cwp.disciplina);
+
+    // Obtener fechas
+    const fechaInicio = f.inicio || fechas[cwp.id]?.inicio || '';
+    const fechaTermino = f.termino || fechas[cwp.id]?.termino || '';
+
+    // Obtener criterios y restricciones
+    const criterio = criteriosPorCWP[cwp.id] || 'Sin definir';
+    const restriccionesArray = restriccionesPorCWP[cwp.id] || [];
+    const restriccionesText = Array.isArray(restriccionesArray) && restriccionesArray.length > 0
+      ? restriccionesArray.map((r, idx) => `${idx + 1}. ${r.texto}`).join('<br>')
+      : 'Sin definir';
+
+    fichasHtml += `<div style="padding:15px 0;border-top:${idx>0?'2px solid #ccc':''};margin-top:${idx>0?'20px':'0'};">
+      <h2 style="color:#d32f2f;text-align:center;margin:20px 0 15px;font-size:16pt;">FICHA CWP: ${cwp.code}</h2>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:15px;">
+        <tr>
+          <td style="padding:8px;border:1px solid #999;font-weight:700;background:#e8e8e8;width:25%;">Código</td>
+          <td style="padding:8px;border:1px solid #999;">${f.codigo || cwp.code}</td>
+          <td style="padding:8px;border:1px solid #999;font-weight:700;background:#e8e8e8;width:25%;">Disciplina</td>
+          <td style="padding:8px;border:1px solid #999;">${discObj?.name || cwp.name}</td>
+        </tr>
+        <tr>
+          <td style="padding:8px;border:1px solid #999;font-weight:700;background:#e8e8e8;">Inicio</td>
+          <td style="padding:8px;border:1px solid #999;">${fechaInicio ? convertYYYYMMDDtoDDMMYYYY(fechaInicio) : '--'}</td>
+          <td style="padding:8px;border:1px solid #999;font-weight:700;background:#e8e8e8;">Término</td>
+          <td style="padding:8px;border:1px solid #999;">${fechaTermino ? convertYYYYMMDDtoDDMMYYYY(fechaTermino) : '--'}</td>
+        </tr>
+        <tr>
+          <td style="padding:8px;border:1px solid #999;font-weight:700;background:#e8e8e8;">Horas Hombre (HH)</td>
+          <td style="padding:8px;border:1px solid #999;color:#5a9a68;font-weight:bold;">${(f.hh !== undefined && f.hh !== null ? f.hh : (cwp.hh !== undefined && cwp.hh !== null ? cwp.hh : 0)).toLocaleString('es-ES')} HH</td>
+          <td style="padding:8px;border:1px solid #999;font-weight:700;background:#e8e8e8;">Duración (Semanas)</td>
+          <td style="padding:8px;border:1px solid #999;">${(() => {
+            if(fechaInicio && fechaTermino) {
+              const f1 = fechaInicio.split('-');
+              const f2 = fechaTermino.split('-');
+              const d1 = new Date(parseInt(f1[0]), parseInt(f1[1])-1, parseInt(f1[2]));
+              const d2 = new Date(parseInt(f2[0]), parseInt(f2[1])-1, parseInt(f2[2]));
+              const days = Math.floor((d2 - d1) / (1000*60*60*24));
+              const weeks = Math.ceil(days / 7);
+              return weeks + ' semanas';
+            }
+            return '--';
+          })()}</td>
+        </tr>
+        <tr>
+          <td colspan="4" style="padding:8px;border:1px solid #999;font-weight:700;background:#e8e8e8;">Descripción / Alcance</td>
+        </tr>
+        <tr>
+          <td colspan="4" style="padding:8px;border:1px solid #999;">${(f.desc || 'Sin definir').replace(/\n/g, '<br>')}</td>
+        </tr>
+        ${f.antecedentes ? `
+        <tr>
+          <td colspan="4" style="padding:8px;border:1px solid #999;font-weight:700;background:#e8e8e8;">Antecedentes Adicionales</td>
+        </tr>
+        <tr>
+          <td colspan="4" style="padding:8px;border:1px solid #999;">${f.antecedentes.replace(/\n/g, '<br>')}</td>
+        </tr>
+        ` : ''}
+      </table>
+      <div style="margin-bottom:15px;text-align:center;">
+        <h4 style="margin-bottom:10px;font-size:11pt;">Visualización del CWP</h4>
+        <div style="min-height:120px;display:flex;align-items:center;justify-content:center;background:#f9f9f9;border:1px solid #ddd;border-radius:4px;">
+          ${(() => {
+            if(!f.imagen) {
+              return '<svg style="width:50px;height:50px;opacity:0.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
+            }
+            return '<img src="./cwp-images/' + f.imagen + '" alt="CWP Image" style="max-width:100%;max-height:200px;border-radius:4px;">';
+          })()}
+        </div>
+      </div>
+      <div style="margin-bottom:15px;">
+        <h4 style="margin-bottom:10px;font-size:11pt;">Cronograma del CWP</h4>
+        <div style="font-size:0.85rem;overflow-x:auto;background:#f9f9f9;border:1px solid #ddd;border-radius:4px;padding:10px;">
+          ${(() => {
+            function parseDate(dateStr) {
+              if(!dateStr || typeof dateStr !== 'string' || dateStr.length !== 10) return null;
+              const parts = dateStr.split('-');
+              if(parts.length !== 3) return null;
+              const year = parseInt(parts[0], 10);
+              const month = parseInt(parts[1], 10);
+              const day = parseInt(parts[2], 10);
+              return new Date(year, month - 1, day);
+            }
+            const validCWPsAll = [];
+            let minD = null, maxD = null;
+            cwpDefinidos.forEach(c => {
+              const inicio = fechas[c.id]?.inicio;
+              const termino = fechas[c.id]?.termino;
+              if(inicio && termino && inicio.length === 10 && termino.length === 10) {
+                const siDate = parseDate(inicio);
+                const tiDate = parseDate(termino);
+                if(siDate && tiDate && siDate <= tiDate) {
+                  validCWPsAll.push({cwp: c, inicio: siDate, termino: tiDate});
+                  if(!minD || siDate < minD) minD = siDate;
+                  if(!maxD || tiDate > maxD) maxD = tiDate;
+                }
+              }
+            });
+            if(!minD || !maxD || validCWPsAll.length === 0) {
+              if(fechaInicio && fechaTermino) {
+                const si = parseDate(fechaInicio);
+                const ti = parseDate(fechaTermino);
+                if(si && ti) { minD = si; maxD = ti; }
+                else return '<p style="color:#999;text-align:center;padding:10px;">⏱️ Fechas inválidas</p>';
+              } else {
+                return '<p style="color:#999;text-align:center;padding:10px;">📅 Ingresa fechas para ver el cronograma</p>';
+              }
+            }
+            minD = new Date(minD);
+            maxD = new Date(maxD);
+            const daysDiff = Math.floor((maxD - minD) / (1000*60*60*24));
+            const totalWeeks = Math.ceil(daysDiff / 7) + 1;
+            let ganttHtml = '<table style="border-collapse:collapse;width:100%;font-size:0.75rem;"><tr>';
+            ganttHtml += '<th style="background:#3a3a3a;color:white;padding:6px;border:1px solid #666;text-align:left;min-width:80px;">CWP</th>';
+            for(let w = 0; w < totalWeeks; w++) {
+              const weekDate = new Date(minD);
+              weekDate.setDate(weekDate.getDate() + (w * 7));
+              const dayNum = ('0' + weekDate.getDate()).slice(-2);
+              const monthShort = weekDate.toLocaleDateString('es-ES', {month:'short'}).substring(0,3);
+              ganttHtml += '<th style="background:#3a3a3a;color:white;padding:4px;border:1px solid #666;width:30px;text-align:center;font-size:0.65rem;">' + dayNum + '/' + monthShort + '</th>';
+            }
+            ganttHtml += '</tr>';
+            cwpDefinidos.forEach(c => {
+              const cwpData = validCWPsAll.find(v => v.cwp.id === c.id);
+              const isCurrentCWP = c.id === cwp.id;
+              ganttHtml += '<tr style="background:' + (isCurrentCWP ? '#fef3e8' : '#f5f5f5') + '">';
+              ganttHtml += '<td style="padding:6px;border:1px solid #ddd;font-weight:bold;color:' + (isCurrentCWP ? c.color : '#999') + ';text-align:left;">' + c.code + '</td>';
+              if(cwpData) {
+                const {inicio, termino} = cwpData;
+                for(let w = 0; w < totalWeeks; w++) {
+                  const weekStart = new Date(minD);
+                  weekStart.setDate(weekStart.getDate() + (w * 7));
+                  const weekEnd = new Date(weekStart);
+                  weekEnd.setDate(weekEnd.getDate() + 6);
+                  const isActive = (inicio <= weekEnd && termino >= weekStart);
+                  let tdStyle = 'border:1px solid #e0e0e0;height:25px;';
+                  if(isActive) {
+                    if(isCurrentCWP) {
+                      tdStyle = 'background:' + c.color + ';border:2px solid ' + c.color + ';height:25px;box-shadow:inset 0 0 8px rgba(0,0,0,0.3);';
+                    } else {
+                      tdStyle = 'background:#d3d3d3;opacity:0.5;border:1px solid #999;height:25px;';
+                    }
+                  }
+                  ganttHtml += '<td style="' + tdStyle + '"></td>';
+                }
+              } else {
+                for(let w = 0; w < totalWeeks; w++) ganttHtml += '<td style="background:transparent;border:1px solid #e0e0e0;height:25px;"></td>';
+              }
+              ganttHtml += '</tr>';
+            });
+            ganttHtml += '</table>';
+            return ganttHtml;
+          })()}
+        </div>
+        <p style="font-size:0.75rem;color:#666;margin-top:8px;"><strong>📌 Destacado:</strong> ${cwp.code} aparece con fondo resaltado</p>
+      </div>
+      ${criterio ? `
+      <div style="margin-bottom:12px;">
+        <strong style="display:block;margin-bottom:5px;">Criterios de Quiebre:</strong>
+        <div style="padding:10px;background:#f5f5f5;border:1px solid #ddd;min-height:40px;">${criterio}</div>
+      </div>
+      ` : ''}
+      ${(() => {
+        const restricciones = restriccionesPorCWP[cwp.id] || [];
+        if(restricciones.length === 0) return '';
+        return `
+      <div style="margin-bottom:12px;">
+        <strong style="display:block;margin-bottom:5px;">Restricciones y Estado:</strong>
+        <table style="width:100%;border-collapse:collapse;font-size:0.9rem;margin-top:0.5rem;">
+          <tr style="background:#e8e8e8;">
+            <th style="padding:8px;border:1px solid #ddd;text-align:left;">#</th>
+            <th style="padding:8px;border:1px solid #ddd;text-align:left;">Restricción</th>
+            <th style="padding:8px;border:1px solid #ddd;text-align:center;width:140px;">Estado</th>
+            <th style="padding:8px;border:1px solid #ddd;text-align:left;width:120px;">Responsable</th>
+          </tr>
+          ${restricciones.map((r, idx) => {
+            const estados = estadoRestricciones[cwp.id] || [];
+            const est = estados[idx] || {};
+            const estadoLabel = est.estado === 'liberada' ? '✓ Liberada' : est.estado === 'siguiente' ? '→ FEL Post.' : '--';
+            const estadoColor = est.estado === 'liberada' ? '#5a9a68' : est.estado === 'siguiente' ? '#e87c1e' : '#999';
+            return `<tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold;text-align:center;">${idx + 1}</td><td style="padding:8px;border:1px solid #ddd;">${r.texto}</td><td style="padding:8px;border:1px solid #ddd;text-align:center;color:${estadoColor};font-weight:bold;">${estadoLabel}</td><td style="padding:8px;border:1px solid #ddd;">${est.responsable || '--'}</td></tr>`;
+          }).join('')}
+        </table>
+      </div>
+        `;
+      })()}
+      ${f.fel ? `
+      <div>
+        <strong style="display:block;margin-bottom:5px;">Consideraciones FEL Siguiente:</strong>
+        <div style="padding:10px;background:#f5f5f5;border:1px solid #ddd;min-height:40px;">${f.fel.replace(/\n/g, '<br>')}</div>
+      </div>
+      ` : ''}
+    </div>`;
+  });
+
+  return `<div style="text-align:center;padding:30px 20px;border-bottom:3px solid #e87c1e;margin-bottom:20px;">
+    <h1 style="font-size:20pt;color:#3a3a3a;margin:0 0 5px;">Taller Módulo 3 - CWP</h1>
+    <h2 style="font-size:13pt;color:#e87c1e;font-weight:400;margin:5px 0;">FEL 3: Quiebre a Nivel de Paquete</h2>
+    <p style="font-size:10pt;color:#666;margin:8px 0 0;">Planta de Reactivos - CWA-05</p>
+    <p style="font-size:9pt;color:#999;margin:8px 0 0;">Fecha: ${new Date().toLocaleDateString('es-CL')}</p>
+  </div>
+  <div style="margin-bottom:20px;">
+    <h3 style="font-size:12pt;color:#3a3a3a;margin-bottom:10px;font-weight:bold;">Resumen General</h3>
+    <table style="width:100%;border-collapse:collapse;">
+      <tr style="background:#f5f5f5;border:1px solid #999;">
+        <td style="padding:10px;border:1px solid #999;font-weight:bold;">CWP Definidos</td>
+        <td style="padding:10px;border:1px solid #999;">${cwpDefinidos.length}</td>
+      </tr>
+      <tr style="border:1px solid #999;">
+        <td style="padding:10px;border:1px solid #999;font-weight:bold;">Total HH Asignadas a CWP</td>
+        <td style="padding:10px;border:1px solid #999;">${totalHHAsignadas.toLocaleString('es-ES')}</td>
+      </tr>
+      <tr style="background:#f5f5f5;border:1px solid #999;">
+        <td style="padding:10px;border:1px solid #999;font-weight:bold;">Diferencia HH (CWA-05: 184,050)</td>
+        <td style="padding:10px;border:1px solid #999;">${(184050 - totalHHAsignadas).toLocaleString('es-ES')}</td>
+      </tr>
+      <tr style="border:1px solid #999;">
+        <td style="padding:10px;border:1px solid #999;font-weight:bold;">Restricciones Liberadas</td>
+        <td style="padding:10px;border:1px solid #999;">${(() => {
+          let count = 0;
+          Object.values(estadoRestricciones).forEach(cwpRestricciones => {
+            if(Array.isArray(cwpRestricciones)) {
+              cwpRestricciones.forEach(r => {
+                if(r && r.estado === 'liberada') count++;
+              });
+            }
+          });
+          return count;
+        })()}</td>
+      </tr>
+      <tr style="background:#f5f5f5;border:1px solid #999;">
+        <td style="padding:10px;border:1px solid #999;font-weight:bold;">Restricciones que Pasan a Ingeniería</td>
+        <td style="padding:10px;border:1px solid #999;">${(() => {
+          let count = 0;
+          Object.values(estadoRestricciones).forEach(cwpRestricciones => {
+            if(Array.isArray(cwpRestricciones)) {
+              cwpRestricciones.forEach(r => {
+                if(r && r.estado === 'siguiente') count++;
+              });
+            }
+          });
+          return count;
+        })()}</td>
+      </tr>
+      <tr style="border:1px solid #999;">
+        <td style="padding:10px;border:1px solid #999;font-weight:bold;">Fichas Completadas</td>
+        <td style="padding:10px;border:1px solid #999;">${(() => {
+          let count = 0;
+          Object.values(fichas).forEach(ficha => {
+            if(ficha && ficha.codigo && ficha.desc && ficha.inicio && ficha.termino && ficha.hh) {
+              count++;
+            }
+          });
+          return count;
+        })()}</td>
+      </tr>
+    </table>
+  </div>
+  ${criterioGeneral ? `
+  <div style="margin-bottom:20px;">
+    <h3 style="font-size:12pt;color:#3a3a3a;margin-bottom:10px;font-weight:bold;">Criterios Generales de Quiebre</h3>
+    <div style="padding:15px;background:#f9f9f9;border:1px solid #ddd;border-left:4px solid #e87c1e;line-height:1.6;">
+      ${criterioGeneral.replace(/\n/g, '<br>')}
+    </div>
+  </div>
+  ` : ''}
+  ${restriccionGeneral ? `
+  <div style="margin-bottom:20px;">
+    <h3 style="font-size:12pt;color:#3a3a3a;margin-bottom:10px;font-weight:bold;">Restricciones Generales</h3>
+    <div style="padding:15px;background:#f9f9f9;border:1px solid #ddd;border-left:4px solid #e87c1e;line-height:1.6;">
+      ${restriccionGeneral.replace(/\n/g, '<br>')}
+    </div>
+  </div>
+  ` : ''}
+  ${fichasHtml}
+  <div style="text-align:center;margin-top:30px;padding-top:20px;border-top:2px solid #ccc;">
+    <button onclick="exportarPDF()" style="background:#e87c1e;color:white;padding:10px 20px;border:none;border-radius:5px;cursor:pointer;font-weight:bold;font-size:11pt;">Imprimir / Guardar como PDF</button>
+  </div>`;
+}
+
+// ===== GENERADOR DE RESUMEN CWPs =====
+function generarResumenCWPs() {
+  const container = document.getElementById('cwps-container');
+
+  if (cwpDefinidos.length === 0) {
+    container.innerHTML = '<div class="card" style="text-align:center;padding:3rem;"><p style="color:var(--muted);font-size:1.1rem;">📭 Sin CWPs creados</p><p style="color:var(--muted);font-size:0.9rem;margin-top:0.5rem;">Comienza en la pestaña "Definir CWP" para crear paquetes de trabajo.</p></div>';
+    return;
+  }
+
+  let html = '';
+
+  // Agrupar por disciplina
+  const disciplinasCWP = {};
+  cwpDefinidos.forEach(cwp => {
+    const disc = disciplinas.find(d => d.id === cwp.disciplina);
+    if (disc) {
+      if (!disciplinasCWP[disc.code]) {
+        disciplinasCWP[disc.code] = {name: disc.name, color: disc.color, cwps: []};
+      }
+      disciplinasCWP[disc.code].cwps.push(cwp);
+    }
+  });
+
+  // Generar HTML por disciplina
+  Object.keys(disciplinasCWP).sort().forEach(discCode => {
+    const discData = disciplinasCWP[discCode];
+    const cwpList = discData.cwps;
+
+    html += `<div class="card" style="border-left:4px solid ${discData.color};">
+      <h3 style="color:${discData.color};margin-bottom:1rem;">${discCode} - ${discData.name}</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem;">`;
+
+    cwpList.forEach(cwp => {
+      const ficha = fichas[cwp.id];
+      const f = fechas[cwp.id];
+
+      // Calcular datos
+      const desc = ficha?.desc || cwp.descripcion || 'Sin descripción';
+      const hh = ficha?.hh || cwp.hh || 0;
+      const hhAnte = cwp.hh || 0;
+      const varHH = hh - hhAnte;
+      const varColor = varHH > 0 ? '#c0392b' : varHH < 0 ? '#5a9a68' : '#666';
+
+      let dateInfo = 'Sin fechas';
+      let duracion = '';
+      if (f && f.inicio && f.termino) {
+        const inicio = new Date(f.inicio);
+        const termino = new Date(f.termino);
+        const dias = (termino - inicio) / (24 * 60 * 60 * 1000);
+        const semanas = Math.ceil(dias / 7);
+        dateInfo = `${inicio.toLocaleDateString('es-ES')} - ${termino.toLocaleDateString('es-ES')}`;
+        duracion = `${semanas} semana${semanas !== 1 ? 's' : ''}`;
+      }
+
+      const restricciones = restriccionesPorCWP[cwp.id] || [];
+      const criterio = criteriosPorCWP[cwp.id] || 'Sin criterio';
+
+      html += `<div style="background:#f7fafc;border:1px solid var(--border);border-radius:8px;padding:1rem;">
+        <div style="margin-bottom:0.75rem;">
+          <p style="font-weight:bold;color:var(--primary);font-size:1.1rem;margin-bottom:0.25rem;">${cwp.code}</p>
+          <p style="font-size:0.9rem;color:var(--muted);">${desc}</p>
+        </div>
+
+        <div style="background:white;padding:0.75rem;border-radius:6px;margin-bottom:0.75rem;font-size:0.85rem;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem;">
+            <span style="font-weight:600;">HH Planificadas:</span>
+            <span style="font-weight:bold;color:${varColor};">${hh.toLocaleString('es-ES')} ${varHH !== 0 ? '(' + (varHH > 0 ? '+' : '') + varHH + ')' : ''}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem;">
+            <span style="font-weight:600;">Período:</span>
+            <span style="font-weight:bold;">${dateInfo}</span>
+          </div>
+          ${duracion ? `<div style="display:flex;justify-content:space-between;">
+            <span style="font-weight:600;">Duración:</span>
+            <span style="font-weight:bold;">${duracion}</span>
+          </div>` : ''}
+        </div>
+
+        <div style="margin-bottom:0.75rem;">
+          <p style="font-weight:600;color:var(--primary-l);font-size:0.9rem;margin-bottom:0.25rem;">📌 Criterio de Quiebre</p>
+          <p style="font-size:0.85rem;color:#666;line-height:1.4;">${criterio}</p>
+        </div>
+
+        ${restricciones.length > 0 ? `<div>
+          <p style="font-weight:600;color:var(--primary-l);font-size:0.9rem;margin-bottom:0.25rem;">⚠️ Restricciones (${restricciones.length})</p>
+          <ol style="font-size:0.85rem;margin-left:1.5rem;margin-bottom:0;">
+            ${restricciones.map((r, idx) => `<li style="margin-bottom:0.25rem;">${r.texto}</li>`).join('')}
+          </ol>
+        </div>` : '<p style="font-size:0.85rem;color:#666;margin:0;">✓ Sin restricciones</p>'}
+      </div>`;
+    });
+
+    html += `</div></div>`;
+  });
+
+  container.innerHTML = html;
+}
+
+// ===== DEMO DATA =====
+function cargarDatosPrueba() {
+  // Select all disciplines
+  selectedDisciplinas = new Set(['c', 's', 'm', 'p', 'e', 'i']);
+  hhEstimates = {c: 12000, s: 15000, m: 25000, p: 18000, e: 10000, i: 4050};
+
+  // Update CWP list
+  updateCWPList();
+}
+
+// ===== RESETEAR PÁGINA COMPLETAMENTE =====
+function resetearPaginaCompleta() {
+  if(!confirm('⚠️ ¿Estás seguro? Esto eliminará TODOS los datos y no se puede deshacer.')) {
+    return;
+  }
+
+  // Limpiar todas las variables globales
+  selectedDisciplinas = new Set();
+  hhEstimates = {};
+  cwpDefinidos = [];
+  disciplinasPersonalizadas = [];
+  cwpsCodificados = {};
+  fichas = {};
+  fechas = {};
+  criteriosPorCWP = {};
+  criterioGeneral = '';
+  restriccionesPorCWP = {};
+  restriccionGeneral = '';
+  estadoRestricciones = {};
+
+  // Limpiar localStorage
+  localStorage.clear();
+  sessionStorage.clear();
+
+  // Recargar página
+  window.location.href = window.location.href.split('?')[0] + '?' + new Date().getTime();
+}
+
+// Init
+window.onload = function() {
+  console.log('=== INICIALIZANDO PÁGINA ===');
+  console.log('✓ Página siempre inicia limpia (sin localStorage)');
+
+  // LIMPIAR ABSOLUTAMENTE TODO
+  selectedDisciplinas = new Set();
+  cwpDefinidos = [];
+  hhEstimates = {};
+  fichas = {};
+  fechas = {};
+  disciplinasPersonalizadas = [];
+  cwpsCodificados = {};
+  criteriosPorCWP = {};
+  criterioGeneral = '';
+  restriccionesPorCWP = {};
+  restriccionGeneral = '';
+  estadoRestricciones = {};
+
+  // Inicializar UI limpia
+  setTimeout(() => {
+    // Limpiar la lista de CWPs
+    const list = document.getElementById('cwp-list');
+    if(list) {
+      list.innerHTML = '';
+    }
+
+    // Limpiar contenedor de codificación
+    const codContainer = document.getElementById('codificacion-cwp-container');
+    if(codContainer) {
+      codContainer.innerHTML = '';
+    }
+
+    // Limpiar disciplinas personalizadas
+    const persContainer = document.getElementById('disciplinas-personalizadas');
+    if(persContainer) {
+      persContainer.innerHTML = '';
+    }
+
+    // Mostrar disciplinas sin seleccionar
+    const grid = document.getElementById('discipline-grid');
+    if(grid) {
+      let html = '';
+      disciplinas.forEach(d => {
+        html += `<label style="padding:0.5rem;"><input type="checkbox" onchange="toggleDisciplina('${d.id}')" /> <span style="color:${d.color};font-weight:600;">${d.code}</span> ${d.name}</label>`;
+      });
+      grid.innerHTML = html;
+    }
+
+    // Total en 0
+    const totalEl = document.getElementById('cwp-total');
+    if(totalEl) {
+      totalEl.textContent = 'Total: 0 HH de 184,050 HH';
+    }
+
+    // Tablas vacías
+    try {
+      renderCriteriosTable();
+      renderRestriccionesTable();
+    } catch(e) {
+      console.error('Error inicializando tablas:', e);
+    }
+
+    console.log('✓ ¡PÁGINA 100% LIMPIA Y LISTA!');
+  }, 50);
+
+  // Initialize visualizer
+  const previewer = document.getElementById('informe-preview');
+  if (previewer) {
+    previewer.innerHTML = '<p style="color:var(--muted);text-align:center;padding:2rem;">Define CWPs y fechas para ver la previsualización del informe</p>';
+  }
+
+  // Initialize "Cargar Datos" button para ficha individual
+  const cargarBtn = document.getElementById('cargarFichaBtn');
+  if(cargarBtn) {
+    cargarBtn.addEventListener('click', cargarDatos);
+  }
+
+  // Initialize "Cargar Proyecto" buttons en todas las pestañas
+  const cargarBtns = [
+    'cargarProyectoBtnDefinir',
+    'cargarProyectoBtnCriterios',
+    'cargarProyectoBtnRestricciones',
+    'cargarProyectoBtnPlanificacion',
+    'cargarProyectoBtnFicha'
+  ];
+
+  cargarBtns.forEach(btnId => {
+    const btn = document.getElementById(btnId);
+    if(btn) {
+      btn.addEventListener('click', abrirModalCargar);
+    }
+  });
+
+  // Initialize "Cargar Proyecto" button en Resultados (abre file input)
+  const cargarResultadosBtn = document.getElementById('cargarProyectoBtnResultados');
+  if(cargarResultadosBtn) {
+    cargarResultadosBtn.addEventListener('click', abrirCargaProyectoArchivo);
+  }
+};
+</script>
+
+</body>
+</html>
